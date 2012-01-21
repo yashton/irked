@@ -18,20 +18,24 @@ LOGGER.addHandler(FILE_HANDLER)
 
 class EchoRequestHandler(socketserver.StreamRequestHandler):
     def handle(self):
+        LOGGER.info("Connected: %s:%d",
+                    self.client_address[0],
+                    self.client_address[1])
         try:
             for line in self.rfile:
                 self.data = line
-                LOGGER.debug("Address: %s:%d",
+                LOGGER.debug("Received from %s:%d - %s%s",
                              self.client_address[0],
-                             self.client_address[1])
-                LOGGER.debug(self.data)
+                             self.client_address[1],
+                             self.data[:16],
+                             "..." if len(self.data) > 16 else "")
                 self.wfile.write(self.data.upper())
         except Exception as err:
             LOGGER.error("Error from %s:%d - %s",
                         self.client_address[0],
                         self.client_address[1],
                         err)
-        LOGGER.debug("Finished %s:%d",
+        LOGGER.info("Finished %s:%d",
                      self.client_address[0],
                      self.client_address[1])
 
