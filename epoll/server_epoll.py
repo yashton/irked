@@ -46,10 +46,10 @@ try:
                              '...' if len(requests[fileno]) > 16 else ''))
             elif event & select.EPOLLOUT:
                 byteswritten = connections[fileno].send(responses[fileno])
+                requests[fileno] = requests[fileno][byteswritten:]
                 responses[fileno] = responses[fileno][byteswritten:]
                 if len(responses[fileno]) == 0:
-                    epoll.modify(fileno, 0)
-                    connections[fileno].shutdown(socket.SHUT_RDWR)
+                    epoll.modify(fileno, select.EPOLLIN)
             elif event & select.EPOLLHUP:
                 epoll.unregister(fileno)
                 connections[fileno].close()
