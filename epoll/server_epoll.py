@@ -28,6 +28,7 @@ try:
                 connection, address = serversocket.accept()
                 connection.setblocking(0)
                 fileno = connection.fileno()
+                print('Connect from %s with fileno %d' % (address, fileno))
                 epoll.register(fileno, select.EPOLLIN)
                 connections[fileno] = connection
                 addresses[fileno] = address
@@ -53,6 +54,7 @@ try:
             elif event & select.EPOLLHUP:
                 epoll.unregister(fileno)
                 connections[fileno].close()
+                print('HUP from %s with fileno %d' % (addresses[fileno], fileno))
                 del connections[fileno]
                 del addresses[fileno]
                 del requests[fileno]
