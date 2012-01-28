@@ -22,8 +22,8 @@ class EchoHandler(asyncore.dispatcher):
 
     def __init__(self, socket, server):
         asyncore.dispatcher_with_send.__init__(self, socket)
-        self.buffer = bytearray()
-
+        self.out_buffer = bytearray()
+        self.in_buffer = b''
         self.server = server
         self.server.clients.add(self)
 
@@ -32,20 +32,21 @@ class EchoHandler(asyncore.dispatcher):
         self.registered = False
 
     def handle_read(self):
-        # FIXME: i think this breaks if the final message is incomplete (it
-        # will send that message anyway)
-        data = self.recv(8192)
-        if data:
-            str_data = bytes.decode(data)
-            LOGGER.debug(repr(str_data))
-            messages = re.split('[\r\n]+', str_data)
-            for message in messages:
-                if len(message):
-                    self.dispatch(message)
+        self.in_buffer += self.recv(8192)
+        if len(self.in_buffer) > 0:
+            LOGGER.debug(self.in_buffer)
+            messages = re.split(b'[\r\n]+', self.in_buffer)
+            if messages[-1] != b'':
+                self.in_buffer = messages[-1]
+            else:
+                self.in_buffer = b''
+            for message in messages[:-1]:
+                LOGGER.debug(message)
+                self.dispatch(bytes.decode(message))
 
     def handle_write(self):
-        sent = self.send(self.buffer)
-        self.buffer = self.buffer[sent:]
+        sent = self.send(self.out_buffer)
+        self.out_buffer = self.out_buffer[sent:]
 
     def parse(self, msg):
         return re.split('\s+', msg)
@@ -103,8 +104,8 @@ class EchoHandler(asyncore.dispatcher):
             self.registered = True
             self._send(irc.RPL_WELCOME, 'Welcome to the Internet Relay Network %s' % self.nick)
             self._send(irc.RPL_YOURHOST, 'Your host is FIXME, running version FIXME')
-            self._send(irc.CREATED, 'This server was created FIXME')
-            self._send(irc.MYINFO, 'FIXMEservername FIXMEversion FIXMEusemodes FIXMEchannelmodes')
+            self._send(irc.RPL_CREATED, 'This server was created FIXME')
+            self._send(irc.RPL_MYINFO, 'FIXMEservername FIXMEversion FIXMEusemodes FIXMEchannelmodes')
 
             # TODO: show motd
 
@@ -145,13 +146,13 @@ class EchoHandler(asyncore.dispatcher):
         self.raw_send(msg)
 
     def raw_send(self, message):
-        self.buffer += message.encode()
+        self.out_buffer += message.encode()
 
     def readable(self):
         return True
 
     def writeable(self):
-        return (len(self.buffer) > 0)
+        return (len(self.out_buffer) > 0)
 
     def __repr__(self):
         return "<IrcClient: nick=" + repr(self.nick) + " registered=" + repr(self.registered) + " user=" + repr(self.user) + ">"
