@@ -1,9 +1,22 @@
 #!/usr/bin/env python3
 
 import asyncore
+import logging
 import socket
 import re
 import irc
+
+LOG_FILE = "/tmp/bb_ircd.log"
+LOG_FORMAT = "%(asctime)s %(filename)s:" + \
+    "%(lineno)d in %(funcName)s %(levelname)s: %(message)s"
+LOG_LEVEL = logging.DEBUG
+
+LOGGER = logging.getLogger('bb_ircd')
+LOGGER.setLevel(LOG_LEVEL)
+FILE_HANDLER = logging.FileHandler(LOG_FILE)
+FORMATTER = logging.Formatter(LOG_FORMAT)
+FILE_HANDLER.setFormatter(FORMATTER)
+LOGGER.addHandler(FILE_HANDLER)
 
 class EchoHandler(asyncore.dispatcher):
 
@@ -24,7 +37,7 @@ class EchoHandler(asyncore.dispatcher):
         data = self.recv(8192)
         if data:
             str_data = bytes.decode(data)
-            print(repr(str_data))
+            LOGGER.debug(repr(str_data))
             messages = re.split('[\r\n]+', str_data)
             for message in messages:
                 if len(message):
@@ -41,7 +54,7 @@ class EchoHandler(asyncore.dispatcher):
         message = self.parse(msg)
         command = message[0].upper()
         args = message[1:]
-        print('DEBUG: command=%s args=%s' % (command, args))
+        LOGGER.debug('command=%s args=%s', command, args)
 
         if command == 'NICK':
             # TODO: err irc.ERR_UNAVAILRESOURCE
@@ -119,7 +132,7 @@ class EchoHandler(asyncore.dispatcher):
             # raise an error
             pass
 
-        print(repr(self.server))
+        LOGGER.debug(repr(self.server))
 
     def prefix(self):
         return ":%s" % self.nick
@@ -151,14 +164,14 @@ class IrcServer(asyncore.dispatcher):
         self.set_reuse_addr()
         self.bind((host, port))
         self.listen(5)
-        print('Listening on port %s' % port)
+        LOGGER.info('Listening on port %s', port)
 
         self.clients = set()
         self.names = set()
         self.channels = dict()
 
     def handle_accepted(self, socket, port):
-        print('Yay, connection from %s' % repr(port))
+        LOGGER.info('Yay, connection from %s', repr(port))
         handler = EchoHandler(socket, self)
         self.clients.add(handler)
 
