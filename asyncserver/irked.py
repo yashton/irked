@@ -6,12 +6,12 @@ import socket
 import re
 import irc
 
-LOG_FILE = "/tmp/bb_ircd.log"
+LOG_FILE = "/tmp/irked.log"
 LOG_FORMAT = "%(asctime)s %(filename)s:" + \
     "%(lineno)d in %(funcName)s %(levelname)s: %(message)s"
 LOG_LEVEL = logging.DEBUG
 
-LOGGER = logging.getLogger('bb_ircd')
+LOGGER = logging.getLogger('irked')
 LOGGER.setLevel(LOG_LEVEL)
 FILE_HANDLER = logging.FileHandler(LOG_FILE)
 FORMATTER = logging.Formatter(LOG_FORMAT)
