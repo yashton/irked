@@ -3,6 +3,7 @@
 import asyncore
 import socket
 import re
+import irc
 
 class EchoHandler(asyncore.dispatcher):
 
@@ -43,23 +44,22 @@ class EchoHandler(asyncore.dispatcher):
         print('DEBUG: command=%s args=%s' % (command, args))
 
         if command == 'NICK':
-            # TODO: err 437
+            # TODO: err irc.ERR_UNAVAILRESOURCE
 
             if not len(args):
-                self._send(431, ':No nickname given')
+                self._send(irc.ERR_NONICKNAMEGIVEN, ':No nickname given')
                 return
 
-            # TODO: validate nickname (432)
+            # TODO: validate nickname (irc.ERR_ERRONEUSNICKNAME)
 
             nick = args[0]
             if nick in self.server.names:
-                self._send(433, '%s :Nickname is already in use' % self.nick)
+                self._send(irc.ERR_NICKNAMEINUSE, '%s :Nickname is already in use' % self.nick)
                 return
 
-            # TODO: nickname collision (436) -- multiple server stuff
+            # TODO: nickname collision (irc.ERR_NICKCOLLISION) -- multiple server stuff
 
-            # TODO: restricted (484)
-
+            # TODO: restricted (irc.ERR_RESTRICTED)
             # i'm not really sure when it's best to lock the nick, freenode
             # seems to not lock the nick until you're registered, so i guess
             # that's how we should do it too
@@ -77,7 +77,7 @@ class EchoHandler(asyncore.dispatcher):
                 return
 
             if self.registered:
-                self._send(462, ':Unauthorized command (already registered)')
+                self._send(irc.ERR_ALREADYREGISTRED, ':Unauthorized command (already registered)')
 
             user = args[0]
             mode = args[1]
@@ -88,10 +88,10 @@ class EchoHandler(asyncore.dispatcher):
             # TODO? write a nick-changing method that checks for this nick (race condition?)
             self.server.names.add(self.nick) 
             self.registered = True
-            self._send(1, 'Welcome to the Internet Relay Network %s' % self.nick)
-            self._send(2, 'Your host is FIXME, running version FIXME')
-            self._send(3, 'This server was created FIXME')
-            self._send(4, 'FIXMEservername FIXMEversion FIXMEusemodes FIXMEchannelmodes')
+            self._send(irc.RPL_WELCOME, 'Welcome to the Internet Relay Network %s' % self.nick)
+            self._send(irc.RPL_YOURHOST, 'Your host is FIXME, running version FIXME')
+            self._send(irc.CREATED, 'This server was created FIXME')
+            self._send(irc.MYINFO, 'FIXMEservername FIXMEversion FIXMEusemodes FIXMEchannelmodes')
 
             # TODO: show motd
 
@@ -125,7 +125,7 @@ class EchoHandler(asyncore.dispatcher):
         return ":%s" % self.nick
 
     def _err_need_more_params(self, command):
-        self._send(461, '%s :Not enough parameters' % command)
+        self._send(irc.ERR_NEEDMOREPARAMS, '%s :Not enough parameters' % command)
 
     def _send(self, code, message):
         msg = '%s %03d %s %s\n' % (self.server.prefix(), code, self.nick, message)
@@ -187,7 +187,7 @@ class Channel:
         self._send(client, 'JOIN %s' % self.name)
 
         # TODO: proper topic sending
-        client._send(331, '%s :No topic is set' % self.name)
+        client._send(irc.RPL_NOTOPIC, '%s :No topic is set' % self.name)
         self.rpl_name_reply(client)
 
     def remove(self, nick):
@@ -196,8 +196,8 @@ class Channel:
     def rpl_name_reply(self, client):
         # TODO: probably need to split the names list up in case it's too long
         names = [c.nick for c in self.clients]
-        client._send(353, '= %s :%s' % (self.name, str.join(' ', names)))
-        client._send(366, '%s :End of NAMES list' % self.name)
+        client._send(irc.RPL_NAMREPLY, '= %s :%s' % (self.name, str.join(' ', names)))
+        client._send(irc.RPL_ENDOFNAMES, '%s :End of NAMES list' % self.name)
 
     def _send(self, sender, message):
         self.server.notify_channel(self.name, sender.prefix(), message)
