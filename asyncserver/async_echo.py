@@ -5,6 +5,7 @@ import logging
 import socket
 import re
 import irc
+from ircclient import IrcClient, IrcServer
 
 LOG_FILE = "/tmp/bb_ircd.log"
 LOG_FORMAT = "%(asctime)s %(filename)s:" + \
@@ -18,15 +19,17 @@ FORMATTER = logging.Formatter(LOG_FORMAT)
 FILE_HANDLER.setFormatter(FORMATTER)
 LOGGER.addHandler(FILE_HANDLER)
 
-class EchoHandler(asyncore.dispatcher):
+class IrcHandler(asyncore.dispatcher):
 
     def __init__(self, socket, server):
         asyncore.dispatcher_with_send.__init__(self, socket)
         self.out_buffer = bytearray()
         self.in_buffer = b''
+
         self.server = server
         self.server.clients.add(self)
 
+        self.handler = None
         self.nick = None
         self.user = None
         self.registered = False
@@ -36,6 +39,7 @@ class EchoHandler(asyncore.dispatcher):
         if len(self.in_buffer) > 0:
             LOGGER.debug(self.in_buffer)
             messages = re.split(b'[\r\n]+', self.in_buffer)
+            # Complete messages end in trailing newlines, yielding empty string.
             if messages[-1] != b'':
                 self.in_buffer = messages[-1]
             else:
@@ -57,29 +61,38 @@ class EchoHandler(asyncore.dispatcher):
         args = message[1:]
         LOGGER.debug('command=%s args=%s', command, args)
 
-        if command == 'NICK':
+        if command == 'PASS':
+            pass
+            #TODO password hashing 
+        elif command == 'NICK':
             self.cmd_nick(args)
         elif command == 'USER':
-            self.cmd_user(args)
-        elif command == 'JOIN':
-            self.cmd_join(args)
-        elif command == 'QUIT':
-            self.cmd_quit(args)
+            self.handler = IrcClient(self, self.server)
+            self.handler.cmd_user(args)
+        elif command == 'SERVER':
+            self.handler = IrcServer(self, self.server)
+            self.handler.cmd_server(args)
         else:
-            LOGGER.error("Unknown command %s with args %s", command, args)
-            pass
+            try:
+                self.handler.cmd(command, args)
+            except AttributeError:
+                LOGGER.error("Command %s was sent before USER or SERVER: %s",
+                             command,
+                             message)
+            except:
+                LOGGER.error("Unknown command %s with args %s", command, args)
 
     def cmd_nick(self, args):
         # TODO: err irc.ERR_UNAVAILRESOURCE
         if not len(args):
-            self._send(irc.ERR_NONICKNAMEGIVEN, ':No nickname given')
+            self.connection._send(irc.ERR_NONICKNAMEGIVEN, ':No nickname given')
             return
 
         # TODO: validate nickname (irc.ERR_ERRONEUSNICKNAME)
 
         nick = args[0]
         if nick in self.server.names:
-            self._send(irc.ERR_NICKNAMEINUSE, '%s :Nickname is already in use' % self.nick)
+            self.connection._send(irc.ERR_NICKNAMEINUSE, '%s :Nickname is already in use' % self.nick)
             return
 
         # TODO: nickname collision (irc.ERR_NICKCOLLISION) -- multiple server stuff
@@ -94,56 +107,6 @@ class EchoHandler(asyncore.dispatcher):
             self.server.names.remove(old_nick)
             self.server.names.add(nick)
         self.nick = nick
-
-    def cmd_user(self, args):
-        if len(args) < 4:
-            self. _err_need_more_params(command)
-            return
-
-        if self.registered:
-            self._send(irc.ERR_ALREADYREGISTRED, ':Unauthorized command (already registered)')
-
-        user = args[0]
-        mode = args[1]
-        realname = str.join(" ", args[3:]) # NOTE: real command parser will fix this
-
-        self.user = user, mode, realname
-
-        # TODO? write a nick-changing method that checks for this nick (race condition?)
-        self.server.names.add(self.nick) 
-        self.registered = True
-        self._send(irc.RPL_WELCOME, 'Welcome to the Internet Relay Network %s' % self.nick)
-        self._send(irc.RPL_YOURHOST, 'Your host is FIXME, running version FIXME')
-        self._send(irc.RPL_CREATED, 'This server was created FIXME')
-        self._send(irc.RPL_MYINFO, 'FIXMEservername FIXMEversion FIXMEusemodes FIXMEchannelmodes')
-            
-        # TODO: show motd
-
-
-    def cmd_join(self, args):
-        # TODO: support multiple channels at once
-        # TODO: support leaving all channels ('0')
-        # TODO: support keys
-        channel = args[0]
-
-        if channel not in self.server.channels:
-            self.server.channels[channel] = Channel(channel, server)
-        self.server.channels[channel].add(self)
-
-    def cmd_quit(self, args):
-        self.server.clients.remove(self)
-        
-        # TODO: notify relevant servers/clients
-        
-        if self.registered:
-            self.server.names.remove(self.nick)
-
-        # TODO: send error message (see RFC)
-        self.close()
-        
-
-
-        LOGGER.debug(repr(self.server))
 
     def prefix(self):
         return ":%s" % self.nick
@@ -167,15 +130,16 @@ class EchoHandler(asyncore.dispatcher):
     def __repr__(self):
         return "<IrcClient: nick=" + repr(self.nick) + " registered=" + repr(self.registered) + " user=" + repr(self.user) + ">"
 
-class IrcServer(asyncore.dispatcher):
+class IrcDispatcher(asyncore.dispatcher):
 
     def __init__(self, host, port):
+        self.logger = LOGGER
         asyncore.dispatcher.__init__(self)
         self.create_socket(socket.AF_INET, socket.SOCK_STREAM)
         self.set_reuse_addr()
         self.bind((host, port))
         self.listen(5)
-        LOGGER.info('Listening on port %s', port)
+        self.logger.info('Listening on port %s', port)
 
         self.clients = set()
         self.names = set()
@@ -183,7 +147,7 @@ class IrcServer(asyncore.dispatcher):
 
     def handle_accepted(self, socket, port):
         LOGGER.info('Yay, connection from %s', repr(port))
-        handler = EchoHandler(socket, self)
+        handler = IrcHandler(socket, self)
         self.clients.add(handler)
 
     def notify_channel(self, channel, prefix, message):
@@ -226,5 +190,5 @@ class Channel:
     def _send(self, sender, message):
         self.server.notify_channel(self.name, sender.prefix(), message)
         
-server = IrcServer('', 6667)
+server = IrcDispatcher('', 6667)
 asyncore.loop()
