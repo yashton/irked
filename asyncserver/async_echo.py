@@ -21,7 +21,7 @@ class IrcHandler(asyncore.dispatcher):
         self.in_buffer = b''
 
         self.server = server
-        self.server.clients.add(self)
+        self.server.connections.add(self)
 
         self.handler = None
         self.nick = None
@@ -79,14 +79,14 @@ class IrcHandler(asyncore.dispatcher):
     def cmd_nick(self, args):
         # TODO: err irc.ERR_UNAVAILRESOURCE
         if not len(args):
-            self.connection._send(irc.ERR_NONICKNAMEGIVEN, ':No nickname given')
+            self._send(irc.ERR_NONICKNAMEGIVEN, ':No nickname given')
             return
 
         # TODO: validate nickname (irc.ERR_ERRONEUSNICKNAME)
 
         nick = args[0]
-        if nick in self.server.names:
-            self.connection._send(irc.ERR_NICKNAMEINUSE, '%s :Nickname is already in use' % self.nick)
+        if nick in self.server.clients:
+            self._send(irc.ERR_NICKNAMEINUSE, '%s :Nickname is already in use' % self.nick)
             return
 
         # TODO: nickname collision (irc.ERR_NICKCOLLISION) -- multiple server stuff
@@ -98,8 +98,8 @@ class IrcHandler(asyncore.dispatcher):
         if self.registered:
             old_nick = self.nick
             # TODO: nick delay mechanism
-            self.server.names.remove(old_nick)
-            self.server.names.add(nick)
+            self.server.clients[nick] = self.handler
+            del self.server.clients[old_nick]
         self.nick = nick
 
     def prefix(self):
@@ -141,14 +141,15 @@ class IrcDispatcher(asyncore.dispatcher):
         self.listen(5)
         self.logger.info('Listening on port %s', port)
 
-        self.clients = set()
-        self.names = set()
+        self.connections = set()
+        self.clients = dict()
+        self.servers = dict()
         self.channels = dict()
 
     def handle_accepted(self, socket, port):
         self.logger.info('Yay, connection from %s', repr(port))
         handler = IrcHandler(socket, self)
-        self.clients.add(handler)
+        self.connections.add(handler)
 
     def notify_channel(self, channel, prefix, message):
         """send message to all users in the given channel"""
@@ -160,7 +161,7 @@ class IrcDispatcher(asyncore.dispatcher):
         return ":server"
 
     def __repr__(self):
-        return "<IrcServer: clients=" + repr(self.clients) + " names=" + repr(self.names) + " channels=" + repr(self.channels) + ">"
+        return "<IrcServer: clients=" + repr(self.connections) + " names=" + repr(self.clients.keys()) + " channels=" + repr(self.channels) + ">"
 
 class Channel:
     def __init__(self, name, server):

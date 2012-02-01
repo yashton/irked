@@ -20,7 +20,7 @@ class IrcClient:
         self.user = user, mode, realname
 
         # TODO? write a nick-changing method that checks for this nick (race condition?)
-        self.server.names.add(self.connection.nick) 
+        self.server.clients[self.connection.nick] = self
         self.connection.registered = True
         self.connection._send(irc.RPL_WELCOME, 'Welcome to the Internet Relay Network %s' % self.connection.nick)
         self.connection._send(irc.RPL_YOURHOST, 'Your host is FIXME, running version FIXME')
@@ -46,7 +46,7 @@ class IrcClient:
         # TODO: notify relevant servers/clients
         
         if self.connection.registered:
-            self.server.names.remove(self.nick)
+            del self.server[self.connection.nick]
 
         # TODO: send error message (see RFC)
         self.connection.close()
