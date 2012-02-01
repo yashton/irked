@@ -11,13 +11,7 @@ LOG_FILE = "/tmp/bb_ircd.log"
 LOG_FORMAT = "%(asctime)s %(filename)s:" + \
     "%(lineno)d in %(funcName)s %(levelname)s: %(message)s"
 LOG_LEVEL = logging.DEBUG
-
-LOGGER = logging.getLogger('bb_ircd')
-LOGGER.setLevel(LOG_LEVEL)
-FILE_HANDLER = logging.FileHandler(LOG_FILE)
-FORMATTER = logging.Formatter(LOG_FORMAT)
-FILE_HANDLER.setFormatter(FORMATTER)
-LOGGER.addHandler(FILE_HANDLER)
+LOGGER = 'bb_ircd'
 
 class IrcHandler(asyncore.dispatcher):
 
@@ -37,7 +31,7 @@ class IrcHandler(asyncore.dispatcher):
     def handle_read(self):
         self.in_buffer += self.recv(8192)
         if len(self.in_buffer) > 0:
-            LOGGER.debug(self.in_buffer)
+            self.server.logger.debug(self.in_buffer)
             messages = re.split(b'[\r\n]+', self.in_buffer)
             # Complete messages end in trailing newlines, yielding empty string.
             if messages[-1] != b'':
@@ -45,7 +39,7 @@ class IrcHandler(asyncore.dispatcher):
             else:
                 self.in_buffer = b''
             for message in messages[:-1]:
-                LOGGER.debug(message)
+                self.server.logger.debug(message)
                 self.dispatch(bytes.decode(message))
 
     def handle_write(self):
@@ -59,7 +53,7 @@ class IrcHandler(asyncore.dispatcher):
         message = self.parse(msg)
         command = message[0].upper()
         args = message[1:]
-        LOGGER.debug('command=%s args=%s', command, args)
+        self.server.logger.debug('command=%s args=%s', command, args)
 
         if command == 'PASS':
             pass
@@ -76,11 +70,11 @@ class IrcHandler(asyncore.dispatcher):
             try:
                 self.handler.cmd(command, args)
             except AttributeError:
-                LOGGER.error("Command %s was sent before USER or SERVER: %s",
-                             command,
-                             message)
+                self.server.logger.error("Command %s was sent before USER or SERVER: %s",
+                                         command,
+                                         message)
             except:
-                LOGGER.error("Unknown command %s with args %s", command, args)
+                self.server.logger.error("Unknown command %s with args %s", command, args)
 
     def cmd_nick(self, args):
         # TODO: err irc.ERR_UNAVAILRESOURCE
@@ -133,7 +127,13 @@ class IrcHandler(asyncore.dispatcher):
 class IrcDispatcher(asyncore.dispatcher):
 
     def __init__(self, host, port):
-        self.logger = LOGGER
+        self.logger = logging.getLogger(LOGGER)
+        self.logger.setLevel(LOG_LEVEL)
+        file_handler = logging.FileHandler(LOG_FILE)
+        formatter = logging.Formatter(LOG_FORMAT)
+        file_handler.setFormatter(formatter)
+        self.logger.addHandler(file_handler)
+
         asyncore.dispatcher.__init__(self)
         self.create_socket(socket.AF_INET, socket.SOCK_STREAM)
         self.set_reuse_addr()
@@ -146,7 +146,7 @@ class IrcDispatcher(asyncore.dispatcher):
         self.channels = dict()
 
     def handle_accepted(self, socket, port):
-        LOGGER.info('Yay, connection from %s', repr(port))
+        self.logger.info('Yay, connection from %s', repr(port))
         handler = IrcHandler(socket, self)
         self.clients.add(handler)
 
