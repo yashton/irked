@@ -47,13 +47,42 @@ class EchoHandler(asyncore.dispatcher):
         sent = self.send(self.buffer)
         self.buffer = self.buffer[sent:]
 
-    def parse(self, msg):
-        return re.split('\s+', msg)
+    def parse(self, message):
+        # this stuff will be useful for the server, but the client message
+        # syntax is simpler (prefixes are ignored, for example)
+        #hostname = '[-a-zA-Z0-9.]+' # FIXME: this is overly simple
+        #nick     = '[a-zA-Z\[\]\\`_^{}]+[-a-zA-Z\[\]\\`_^{}]'
+        #user     = '[\x01-\x09\x0b-\x0c\x0e-\x1f\x21-\x3f\x41-\xff]+'
+
+        #prefix  = '(?::(?P<prefix>%s|%s!%s@%s) +)?' % (hostname, nick, user, hostname)
+        #command = '(?P<command>[a-zA-Z]+|\d\d\d)'
+        #params  = '(?P<params>.*)'
+
+        #message_pattern = '%s%s +%s' % (prefix, command, params)
+
+        #if match = re.match(message_pattern, message):
+        #    return match.groupdict()
+
+        # prefix is ignored from clients
+        message = re.sub('^:[^ ]+ ', '', message)
+
+        trailing = None
+        match = re.search(':(.*)$', message)
+        if match:
+            trailing = match.groups()[0]
+            message = message[:match.start()]
+
+        params  = message.split()
+        if trailing:
+            params.append(trailing)
+
+        command = params[0].upper()
+        params = params[1:]
+
+        return (command, params)
 
     def dispatch(self, msg):
-        message = self.parse(msg)
-        command = message[0].upper()
-        args = message[1:]
+        command, args = self.parse(msg)
         LOGGER.debug('command=%s args=%s', command, args)
 
         if command == 'NICK':
