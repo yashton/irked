@@ -1,3 +1,4 @@
+import os.path
 import irc
 
 class IrcClient:
@@ -26,9 +27,19 @@ class IrcClient:
         self.connection._send(irc.RPL_YOURHOST, 'Your host is FIXME, running version FIXME')
         self.connection._send(irc.RPL_CREATED, 'This server was created FIXME')
         self.connection._send(irc.RPL_MYINFO, 'FIXMEservername FIXMEversion FIXMEusemodes FIXMEchannelmodes')
-            
-        # TODO: show motd
 
+        self.cmd_motd(list())
+
+    def cmd_motd(self, args):
+        #TODO Need to fetch motd from other servers.
+        if (not os.path.isfile(self.server.motd)):
+            self.connection._send(irc.ERR_NOMOTD, ":MOTD File is missing")
+            return
+        self.connection._send(irc.RPL_MOTDSTART, ":- %s Message of the day - " % self.server.name)
+        motd = open(self.server.motd)
+        for line in motd:
+            self.connection._send(irc.RPL_MOTD, ":- %s" % line)
+        self.connection._send(irc.RPL_ENDOFMOTD, ":End of MOTD command")
 
     def cmd_join(self, args):
         # TODO: support multiple channels at once
@@ -52,9 +63,12 @@ class IrcClient:
         self.connection.close()
 
     def cmd(self, command, args):
-        self.server.logger.warning("Unimplemented command %s with args %s",
-                                   command,
-                                   args)
+        if command == 'MOTD':
+            self.cmd_motd(args)
+        else:
+            self.server.logger.warning("Unimplemented command %s with args %s",
+                                       command,
+                                       args)
 
 class IrcServer:
     def cmd_server(self, args):

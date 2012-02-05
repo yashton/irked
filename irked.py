@@ -7,11 +7,13 @@ import re
 import irc
 from ircclient import IrcClient, IrcServer
 
-LOG_FILE = "/tmp/irked.log"
+MOTD_FILE = "motd"
+
+LOG_FILE = "irked.log"
 LOG_FORMAT = "%(asctime)s %(filename)s:" + \
     "%(lineno)d in %(funcName)s %(levelname)s: %(message)s"
 LOG_LEVEL = logging.DEBUG
-LOGGER = 'bb_ircd'
+LOGGER = "irked"
 
 class IrcHandler(asyncore.dispatcher):
 
@@ -156,6 +158,9 @@ class IrcHandler(asyncore.dispatcher):
 class IrcDispatcher(asyncore.dispatcher):
 
     def __init__(self, host, port):
+        self.name = host
+        self.motd = MOTD_FILE
+
         self.logger = logging.getLogger(LOGGER)
         self.logger.setLevel(LOG_LEVEL)
         file_handler = logging.FileHandler(LOG_FILE)
