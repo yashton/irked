@@ -18,15 +18,25 @@ class IrcClient:
         mode = args[1]
         realname = str.join(" ", args[3:]) # NOTE: real command parser will fix this
 
-        self.user = user, mode, realname
+        self.connection.user = user, mode, realname
 
         # TODO? write a nick-changing method that checks for this nick (race condition?)
         self.server.clients[self.connection.nick] = self
         self.connection.registered = True
-        self.connection._send(irc.RPL_WELCOME, 'Welcome to the Internet Relay Network %s' % self.connection.nick)
-        self.connection._send(irc.RPL_YOURHOST, 'Your host is FIXME, running version FIXME')
-        self.connection._send(irc.RPL_CREATED, 'This server was created FIXME')
-        self.connection._send(irc.RPL_MYINFO, 'FIXMEservername FIXMEversion FIXMEusemodes FIXMEchannelmodes')
+        self.connection._send(irc.RPL_WELCOME, 'Welcome to the Internet Relay Network %s!%s@%s',
+                              self.connection.nick,
+                              self.connection.user[0],
+                              self.connection.host)
+        self.connection._send(irc.RPL_YOURHOST, 'Your host is %s, running version %s',
+                              self.server.name,
+                              self.server.version)
+        self.connection._send(irc.RPL_CREATED, 'This server was created %s',
+                              self.server.launched)
+        self.connection._send(irc.RPL_MYINFO, '%s %s %s %s',
+                              self.server.name,
+                              self.server.version,
+                              self.server.usermodes,
+                              self.server.channelmodes)
 
         self.cmd_motd(list())
 

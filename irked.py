@@ -5,6 +5,9 @@ import logging
 import socket
 import re
 import irc
+import time
+import subprocess
+import sys
 from ircclient import IrcClient, IrcServer
 
 MOTD_FILE = "motd"
@@ -28,6 +31,8 @@ class IrcHandler(asyncore.dispatcher):
         self.handler = None
         self.nick = None
         self.user = None
+        # TODO verify: need to get hostname, not IP address.
+        self.host = "%s:%d" % socket.getpeername()
         self.registered = False
 
     def handle_read(self):
@@ -139,8 +144,9 @@ class IrcHandler(asyncore.dispatcher):
     def _err_need_more_params(self, command):
         self._send(irc.ERR_NEEDMOREPARAMS, '%s :Not enough parameters' % command)
 
-    def _send(self, code, message):
-        msg = '%s %03d %s %s\n' % (self.server.prefix(), code, self.nick, message)
+    def _send(self, code, message, *format_args):
+        formatted_message = message % format_args
+        msg = '%s %03d %s %s\n' % (self.server.prefix(), code, self.nick, formatted_message)
         self.raw_send(msg)
 
     def raw_send(self, message):
@@ -158,7 +164,6 @@ class IrcHandler(asyncore.dispatcher):
 class IrcDispatcher(asyncore.dispatcher):
 
     def __init__(self, host, port):
-        self.name = host
         self.motd = MOTD_FILE
 
         self.logger = logging.getLogger(LOGGER)
@@ -175,10 +180,21 @@ class IrcDispatcher(asyncore.dispatcher):
         self.listen(5)
         self.logger.info('Listening on port %s', port)
 
+        if len(host) == 0:
+            self.name = socket.gethostname()
+        else:
+            self.name = host
+
         self.connections = set()
         self.clients = dict()
         self.servers = dict()
         self.channels = dict()
+
+        self.version = self.gen_version()
+        #TODO return correct user modes
+        self.usermodes = "FIXME-usermodes"
+        self.channelmodes = "FIXME-channelmodes"
+        self.launched = time.strftime("%c %Z")
 
     def handle_accepted(self, socket, port):
         self.logger.info('Yay, connection from %s', repr(port))
@@ -196,6 +212,19 @@ class IrcDispatcher(asyncore.dispatcher):
 
     def __repr__(self):
         return "<IrcServer: clients=" + repr(self.connections) + " names=" + repr(self.clients.keys()) + " channels=" + repr(self.channels) + ">"
+
+    def gen_version(self):
+        '''Fetch the current revision number for the working directory for
+        use as a version number'''
+        try:
+            branch = subprocess.check_output(["hg", "branch"])
+            command = ["hg", "heads",
+                       branch.strip(),
+                        "--template", "{rev}:{node|short} ({date|isodate})"]
+            version = subprocess.check_output(command)
+            return "%s-%s" %("irked", version.decode("utf-8"))
+        except:
+            return "unknown"
 
 class Channel:
     def __init__(self, name, server):
