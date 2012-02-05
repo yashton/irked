@@ -2,12 +2,11 @@
 
 import asyncore
 import logging
-import socket
+import socket as _socket
 import re
 import irc
 import time
 import subprocess
-import sys
 from ircclient import IrcClient, IrcServer
 
 MOTD_FILE = "motd"
@@ -21,7 +20,7 @@ LOGGER = "irked"
 class IrcHandler(asyncore.dispatcher):
 
     def __init__(self, socket, server):
-        asyncore.dispatcher_with_send.__init__(self, socket)
+        asyncore.dispatcher.__init__(self, socket)
         self.out_buffer = bytearray()
         self.in_buffer = b''
 
@@ -103,14 +102,12 @@ class IrcHandler(asyncore.dispatcher):
             self.handler = IrcServer(self, self.server)
             self.handler.cmd_server(args)
         else:
-            try:
+            if self.handler is not None:
                 self.handler.cmd(command, args)
-            except AttributeError:
+            else:
                 self.server.logger.error("Command %s was sent before USER or SERVER: %s",
                                          command,
-                                         message)
-            except:
-                self.server.logger.error("Unknown command %s with args %s", command, args)
+                                         msg)
 
     def cmd_nick(self, args):
         # TODO: err irc.ERR_UNAVAILRESOURCE
@@ -174,14 +171,14 @@ class IrcDispatcher(asyncore.dispatcher):
         self.logger.addHandler(file_handler)
 
         asyncore.dispatcher.__init__(self)
-        self.create_socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.create_socket(_socket.AF_INET, _socket.SOCK_STREAM)
         self.set_reuse_addr()
         self.bind((host, port))
         self.listen(5)
         self.logger.info('Listening on port %s', port)
 
         if len(host) == 0:
-            self.name = socket.gethostname()
+            self.name = _socket.gethostname()
         else:
             self.name = host
 
@@ -196,6 +193,9 @@ class IrcDispatcher(asyncore.dispatcher):
         self.channelmodes = "FIXME-channelmodes"
         self.launched = time.strftime("%c %Z")
 
+    def channel_add(self, channel):
+        self.channels[channel] = Channel(channel, self)
+
     def handle_accepted(self, socket, port):
         self.logger.info('Yay, connection from %s', repr(port))
         handler = IrcHandler(socket, self)
@@ -204,7 +204,7 @@ class IrcDispatcher(asyncore.dispatcher):
     def notify_channel(self, channel, prefix, message):
         """send message to all users in the given channel"""
         for client in self.channels[channel].clients:
-            client.raw_send('%s %s\n' % (prefix, message))
+            client.connection.raw_send('%s %s\n' % (prefix, message))
 
     def prefix(self):
         # FIXME
@@ -222,8 +222,8 @@ class IrcDispatcher(asyncore.dispatcher):
                        branch.strip(),
                         "--template", "{rev}:{node|short} ({date|isodate})"]
             version = subprocess.check_output(command)
-            return "%s-%s" %("irked", version.decode("utf-8"))
-        except:
+            return "%s-%s" % ("irked", version.decode("utf-8"))
+        except CalledProcessError:
             return "unknown"
 
 class Channel:
@@ -239,7 +239,7 @@ class Channel:
         self._send(client, 'JOIN %s' % self.name)
 
         # TODO: proper topic sending
-        client._send(irc.RPL_NOTOPIC, '%s :No topic is set' % self.name)
+        client.connection._send(irc.RPL_NOTOPIC, '%s :No topic is set' % self.name)
         self.rpl_name_reply(client)
 
     def remove(self, nick):
@@ -247,12 +247,14 @@ class Channel:
 
     def rpl_name_reply(self, client):
         # TODO: probably need to split the names list up in case it's too long
-        names = [c.nick for c in self.clients]
-        client._send(irc.RPL_NAMREPLY, '= %s :%s' % (self.name, str.join(' ', names)))
-        client._send(irc.RPL_ENDOFNAMES, '%s :End of NAMES list' % self.name)
+        names = [c.connection.nick for c in self.clients]
+        client.connection._send(irc.RPL_NAMREPLY, '= %s :%s' % (self.name, str.join(' ', names)))
+        client.connection._send(irc.RPL_ENDOFNAMES, '%s :End of NAMES list' % self.name)
 
     def _send(self, sender, message):
         self.server.notify_channel(self.name, sender.prefix(), message)
-        
-server = IrcDispatcher('', 6667)
-asyncore.loop()
+
+
+if __name__ == '__main__':        
+    server = IrcDispatcher('', 6667)
+    asyncore.loop()

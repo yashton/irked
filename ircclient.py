@@ -8,7 +8,7 @@ class IrcClient:
 
     def cmd_user(self, args):
         if len(args) < 4:
-            self.connection._err_need_more_params(command)
+            self.connection._err_need_more_params('USER')
             return
 
         if self.connection.registered:
@@ -58,7 +58,7 @@ class IrcClient:
         channel = args[0]
 
         if channel not in self.server.channels:
-            self.server.channels[channel] = Channel(channel, server)
+            self.server.channel_add(channel)
         self.server.channels[channel].add(self)
 
     def cmd_quit(self, args):
@@ -75,10 +75,14 @@ class IrcClient:
     def cmd(self, command, args):
         if command == 'MOTD':
             self.cmd_motd(args)
+        elif command == 'JOIN':
+            self.cmd_join(args)
         else:
             self.server.logger.warning("Unimplemented command %s with args %s",
                                        command,
                                        args)
+    def prefix(self):
+        return ":%s" % self.connection.nick
 
 class IrcServer:
     def cmd_server(self, args):
