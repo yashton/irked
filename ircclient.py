@@ -114,16 +114,13 @@ class IrcClient:
                               channel_name)
 
     def cmd(self, command, args):
-        if command == 'MOTD':
-            self.cmd_motd(args)
-        elif command == 'JOIN':
-            self.cmd_join(args)
-        elif command == 'TOPIC':
-            self.cmd_topic(args)
-        else:
+        try:
+            getattr(self, 'cmd_%s' % command.lower())(args)
+        except AttributeError:
             self.server.logger.warning("Unimplemented command %s with args %s",
                                        command,
                                        args)
+
     def prefix(self):
         return ":%s" % self.connection.nick
 
