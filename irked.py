@@ -249,8 +249,16 @@ class Channel:
 
         self.rpl_name_reply(client)
 
-    def remove(self, nick):
-        pass
+    def remove(self, client, message = None, parted = True):
+        if client in self.clients:
+            if message:
+                self._send(client, 'PART %s :%s' % (self.name, message))
+            else:
+                self._send(client, 'PART %s' % self.name)
+            self.clients.remove(client)
+        else:
+            client.connection._send(irc.ERR_NOTONCHANNEL,
+                    "%s :You're not on that channel" % self.name)
 
     def rpl_name_reply(self, client):
         # TODO: probably need to split the names list up in case it's too long
