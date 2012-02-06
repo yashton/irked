@@ -1,4 +1,5 @@
 import os.path
+import re
 import irc
 
 class IrcClient:
@@ -16,8 +17,7 @@ class IrcClient:
 
         user = args[0]
         mode = args[1]
-        realname = str.join(" ", args[3:]) # NOTE: real command parser will fix this
-
+        realname = args[3]
         self.connection.user = user, mode, realname
 
         # TODO? write a nick-changing method that checks for this nick (race condition?)
@@ -104,6 +104,31 @@ class IrcClient:
                 self.connection._send(irc.RPL_TOPIC, "%s :%s",
                                       channel_name, channel.topic)
 
+    def cmd_privmsg(self, args):
+        if len(args) == 0:
+            self.connection._send(irc.ERR_NORECIPIENT,
+                                  ':No recipient given (%s)',
+                                  'JOIN')
+            return
+        if len(args) == 1:
+            self.connection._send(irc.ERR_NOTEXTTOSEND, ':No text to send')
+            return
+
+        if len(args) != 2:
+            # fail silently?
+            pass
+
+        target, text = args
+
+        if re.match('#', target):
+            self.server.notify_channel(target,
+                    sender = self,
+                    message = 'PRIVMSG %s :%s' % (target, text),
+                    notify_sender = False)
+        else:
+            # TODO, nick/etc messaging
+            pass
+
     def helper_not_in_channel(self, channel_name):
         self.server.logger.debug("Topic request from nick %s "+ \
                                      "not a member of channel %s",
@@ -116,13 +141,16 @@ class IrcClient:
     def cmd(self, command, args):
         try:
             getattr(self, 'cmd_%s' % command.lower())(args)
-        except AttributeError:
+        except AttributeError as err:
             self.server.logger.warning("Unimplemented command %s with args %s",
                                        command,
                                        args)
 
     def prefix(self):
-        return ":%s" % self.connection.nick
+        nick = self.connection.nick
+        username = self.connection.user[0]
+        host = self.connection.getsockname()[0]
+        return ":%s!%s@%s" % (nick, username, host)
 
 class IrcServer:
     def cmd_server(self, args):
