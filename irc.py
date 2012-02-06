@@ -1,4 +1,6 @@
 '''IRC Numeric Message Constants'''
+IRC_MODES = ['a', 's', 'i', 'w', 'o', 'O', 'r' ]
+IRC_USER_MODES = [ 'i', 'w', 'o', 'O', 'r' ]
 
 RPL_WELCOME = 1
 RPL_YOURHOST = 2
@@ -321,3 +323,8 @@ IRC_CODE = {
 501 : "ERR_UMODEUNKNOWNFLAG",
 502 : "ERR_USERSDONTMATCH",
 }
+
+CHANNEL_PREFIX = ['&', '#', '+', '!']
+
+def is_channel_name(name):
+   return len(name[1:]) < 200 and name[0] in CHANNEL_PREFIX

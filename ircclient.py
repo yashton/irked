@@ -2,9 +2,13 @@ import os.path
 import irc
 
 class IrcClient:
+
     def __init__(self, connection, server):
         self.server = server
         self.connection = connection
+        self.modes = dict()
+        for i in irc.IRC_MODES:
+            self.modes[i] = False
 
     def cmd_user(self, args):
         if len(args) < 4:
@@ -113,6 +117,36 @@ class IrcClient:
                               "%s :You're not on that channel",
                               channel_name)
 
+    def cmd_mode(self, args):
+        if not len(args) > 0:
+            self.connection._err_need_more_params('MODE')
+            return
+        target = args[0]
+        if irc.is_channel_name(target):
+            self.cmd_chan_mode(target, args[1:])
+        else:
+            self.cmd_user_mode(target, args[1:])
+
+    def cmd_user_mode(self, target, args):
+        if target != self.connection.nick:
+            self.connection._send(irc.ERR_USERSDONTMATCH,
+                                  ":Cannot change mode for other users")
+            return
+        if len(args) == 0:
+            self.connection_send(irc.RPL_UMODEIS, self.mode_str())
+            return
+        op, flag = args[0]
+        if flag not in irc.IRC_USER_MODES or op != '+' or op != '-':
+            self.connection._send(irc.ERR_UMODEUNKNOWNFLAG, ":Unknown MODE flag")
+            return
+        self.modes[flag] = op == "+"
+
+    def cmd_chan_mode(self, target, args):
+        self.server.logger.debug("MODE channel %s: %s", target, args)
+
+    def mode_str(self):
+        return ''.join([mode for mode, enabled in self.modes.items() if enabled])
+
     def cmd(self, command, args):
         if command == 'MOTD':
             self.cmd_motd(args)
@@ -120,10 +154,13 @@ class IrcClient:
             self.cmd_join(args)
         elif command == 'TOPIC':
             self.cmd_topic(args)
+        elif command == 'MODE':
+            self.cmd_mode(args)
         else:
             self.server.logger.warning("Unimplemented command %s with args %s",
                                        command,
                                        args)
+
     def prefix(self):
         return ":%s" % self.connection.nick
 

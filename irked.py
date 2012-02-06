@@ -144,7 +144,7 @@ class IrcHandler(asyncore.dispatcher):
     def _send(self, code, message, *format_args):
         formatted_message = message % format_args
         msg = '%s %03d %s %s\n' % (self.server.prefix(), code, self.nick, formatted_message)
-        self.server.logger.debug("sent to %s: '%s'", self.nick, msg[:-1])
+        self.server.logger.debug("sent to %s: '%s'", self.nick, msg.rstrip())
         self.raw_send(msg)
 
     def raw_send(self, message):
