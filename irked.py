@@ -88,7 +88,7 @@ class IrcHandler(asyncore.dispatcher):
 
     def dispatch(self, msg):
         command, args = self.parse(msg)
-        self.server.logger.debug('command=%s args=%s', command, args)
+        self.server.logger.debug('received from %s: command=%s args=%s', self.nick, command, args)
 
         if command == 'PASS':
             pass
@@ -144,6 +144,7 @@ class IrcHandler(asyncore.dispatcher):
     def _send(self, code, message, *format_args):
         formatted_message = message % format_args
         msg = '%s %03d %s %s\n' % (self.server.prefix(), code, self.nick, formatted_message)
+        self.server.logger.debug("sent to %s: '%s'", self.nick, msg[:-1])
         self.raw_send(msg)
 
     def raw_send(self, message):
@@ -239,7 +240,11 @@ class Channel:
         self._send(client, 'JOIN %s' % self.name)
 
         # TODO: proper topic sending
-        client.connection._send(irc.RPL_NOTOPIC, '%s :No topic is set' % self.name)
+        if self.topic is None or self.topic == '':
+            client.connection._send(irc.RPL_NOTOPIC, '%s :No topic is set' % self.name)
+        else:
+            client.connection._send(irc.RPL_TOPIC, "%s :%s", self.name, self.topic)
+
         self.rpl_name_reply(client)
 
     def remove(self, nick):

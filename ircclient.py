@@ -72,11 +72,54 @@ class IrcClient:
         # TODO: send error message (see RFC)
         self.connection.close()
 
+    def cmd_topic(self, args):
+        self.server.logger.debug("TOPIC args: %s", args)
+        if len(args) == 0:
+            self.connection._send(irc.ERR_NEEDMOREPARAMS,
+                                  "TOPIC :Not enough parameters")
+        channel_name = args[0]
+        channel = self.server.channels[channel_name]
+        self.server.logger.debug("Topic request for %s: %s",
+                                 channel_name, channel.topic)
+        if len(args) > 1:
+            topic = args[1]
+            self.server.logger.debug("Setting topic for %s: %s",
+                                     channel_name, topic)
+            # TODO permissions
+            # ERR_CHANOPRIVSNEEDED            ERR_NOCHANMODES
+            if self not in channel.clients:
+                self.helper_not_in_channel(channel_name)
+            else:
+                channel.topic = topic
+        else:
+            # No topic parameter indicates a request for topic
+            if self not in channel.clients:
+                self.helper_not_in_channel(channel_name)
+            elif channel.topic is None or channel.topic == '':
+                self.server.logger.debug("No topic for %s", channel_name)
+                self.connection._send(irc.RPL_NOTOPIC,
+                                      "%s :No topic is set",
+                                      channel_name)
+            else:
+                self.connection._send(irc.RPL_TOPIC, "%s :%s",
+                                      channel_name, channel.topic)
+
+    def helper_not_in_channel(self, channel_name):
+        self.server.logger.debug("Topic request from nick %s "+ \
+                                     "not a member of channel %s",
+                                 self.connection.nick,
+                                 channel_name)
+        self.connection._send(irc.ERR_NOTONCHANNEL,
+                              "%s :You're not on that channel",
+                              channel_name)
+
     def cmd(self, command, args):
         if command == 'MOTD':
             self.cmd_motd(args)
         elif command == 'JOIN':
             self.cmd_join(args)
+        elif command == 'TOPIC':
+            self.cmd_topic(args)
         else:
             self.server.logger.warning("Unimplemented command %s with args %s",
                                        command,
