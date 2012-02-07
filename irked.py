@@ -49,8 +49,16 @@ class IrcHandler(asyncore.dispatcher):
                 self.dispatch(bytes.decode(message))
 
     def handle_write(self):
+        self._flush()
+
+    def _flush(self):
         sent = self.send(self.out_buffer)
         self.out_buffer = self.out_buffer[sent:]
+
+    def close(self):
+        while len(self.out_buffer):
+            self._flush()
+        asyncore.dispatcher.close(self)
 
     def parse(self, message):
         # this stuff will be useful for the server, but the client message
@@ -251,10 +259,11 @@ class Channel:
 
     def remove(self, client, message = None, parted = True):
         if client in self.clients:
-            if message:
-                self._send(client, 'PART %s :%s' % (self.name, message))
-            else:
-                self._send(client, 'PART %s' % self.name)
+            if parted:
+                if message:
+                    self._send(client, 'PART %s :%s' % (self.name, message))
+                else:
+                    self._send(client, 'PART %s' % self.name)
             self.clients.remove(client)
         else:
             client.connection._send(irc.ERR_NOTONCHANNEL,

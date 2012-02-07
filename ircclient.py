@@ -76,14 +76,31 @@ class IrcClient:
         self.server.channels[channel].remove(self, part_message)
 
     def cmd_quit(self, args):
-        self.server.clients.remove(self)
-        
-        # TODO: notify relevant servers/clients
-        
-        if self.connection.registered:
-            del self.server[self.connection.nick]
+        to_notify = set({self})
+        to_leave = set()
+        for channel in self.server.channels.values():
+            if self in channel.clients:
+                to_leave.add(channel)
+                to_notify |= channel.clients
 
-        # TODO: send error message (see RFC)
+        if len(args):
+            message = '%s QUIT :%s\r\n' % (self.prefix(), args[0])
+            err_msg = 'ERROR :Closing Link: %s (%s)\r\n' % (self.prefix(), args[0])
+        else:
+            message = '%s QUIT\r\n' % self.prefix()
+            err_msg = 'ERROR :Closing Link: %s\r\n' % self.prefix()
+
+        for client in to_notify:
+            client.connection.raw_send(message)
+
+        for channel in to_leave:
+            channel.remove(self, parted = False)
+
+        self.server.connections.remove(self.connection)
+        del self.server.clients[self.connection.nick]
+
+        # send error message (see RFC)
+        self.connection.raw_send(err_msg)
         self.connection.close()
 
     def cmd_topic(self, args):
