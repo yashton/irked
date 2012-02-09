@@ -124,7 +124,7 @@ class IrcHandler(asyncore.dispatcher):
 
         # TODO: nickname collision (irc.ERR_NICKCOLLISION) -- multiple server stuff
 
-         # TODO: restricted (irc.ERR_RESTRICTED)
+        # TODO: restricted (irc.ERR_RESTRICTED)
         # i'm not really sure when it's best to lock the nick, freenode
         # seems to not lock the nick until you're registered, so i guess
         # that's how we should do it too
@@ -134,9 +134,6 @@ class IrcHandler(asyncore.dispatcher):
             self.server.clients[nick] = self.handler
             del self.server.clients[old_nick]
         self.nick = nick
-
-    def prefix(self):
-        return ":%s" % self.nick
 
     def _err_need_more_params(self, command):
         self._send(irc.ERR_NEEDMOREPARAMS, '%s :Not enough parameters' % command)
@@ -202,10 +199,15 @@ class IrcDispatcher(asyncore.dispatcher):
         handler = IrcHandler(socket, self)
         self.connections.add(handler)
 
-    def notify_channel(self, channel, prefix, message):
+    def notify_channel(self, channel, sender, message, notify_sender = True):
         """send message to all users in the given channel"""
+
+        # TODO: check that the sender has permission to send messages here
+
         for client in self.channels[channel].clients:
-            client.connection.raw_send('%s %s\n' % (prefix, message))
+            if client == sender and not notify_sender:
+                continue
+            client.connection.raw_send('%s %s\n' % (sender.prefix(), message))
 
     def prefix(self):
         # FIXME
@@ -247,8 +249,16 @@ class Channel:
 
         self.rpl_name_reply(client)
 
-    def remove(self, nick):
-        pass
+    def remove(self, client, message = None, parted = True):
+        if client in self.clients:
+            if message:
+                self._send(client, 'PART %s :%s' % (self.name, message))
+            else:
+                self._send(client, 'PART %s' % self.name)
+            self.clients.remove(client)
+        else:
+            client.connection._send(irc.ERR_NOTONCHANNEL,
+                    "%s :You're not on that channel" % self.name)
 
     def rpl_name_reply(self, client):
         # TODO: probably need to split the names list up in case it's too long
@@ -256,8 +266,8 @@ class Channel:
         client.connection._send(irc.RPL_NAMREPLY, '= %s :%s' % (self.name, str.join(' ', names)))
         client.connection._send(irc.RPL_ENDOFNAMES, '%s :End of NAMES list' % self.name)
 
-    def _send(self, sender, message):
-        self.server.notify_channel(self.name, sender.prefix(), message)
+    def _send(self, sender, message, notify_sender = True):
+        self.server.notify_channel(self.name, sender, message, notify_sender)
 
 
 if __name__ == '__main__':        

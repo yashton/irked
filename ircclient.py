@@ -1,8 +1,8 @@
 import os.path
+import re
 import irc
 
 class IrcClient:
-
     def __init__(self, connection, server):
         self.server = server
         self.connection = connection
@@ -20,8 +20,7 @@ class IrcClient:
 
         user = args[0]
         mode = args[1]
-        realname = str.join(" ", args[3:]) # NOTE: real command parser will fix this
-
+        realname = args[3]
         self.connection.user = user, mode, realname
 
         # TODO? write a nick-changing method that checks for this nick (race condition?)
@@ -64,6 +63,20 @@ class IrcClient:
         if channel not in self.server.channels:
             self.server.channel_add(channel)
         self.server.channels[channel].add(self)
+
+    def cmd_part(self, args):
+        if len(args) == 0:
+            self.connection._send(irc.ERR_NEEDMOREPARAMS,
+                                  "PART :Not enough parameters")
+
+        # TODO: support leaving multiple channels at once
+        channel = args[0]
+
+        part_message = None
+        if len(args) == 2:
+            part_message = args[1]
+
+        self.server.channels[channel].remove(self, part_message)
 
     def cmd_quit(self, args):
         self.server.clients.remove(self)
@@ -108,6 +121,31 @@ class IrcClient:
                 self.connection._send(irc.RPL_TOPIC, "%s :%s",
                                       channel_name, channel.topic)
 
+    def cmd_privmsg(self, args):
+        if len(args) == 0:
+            self.connection._send(irc.ERR_NORECIPIENT,
+                                  ':No recipient given (%s)',
+                                  'JOIN')
+            return
+        if len(args) == 1:
+            self.connection._send(irc.ERR_NOTEXTTOSEND, ':No text to send')
+            return
+
+        if len(args) != 2:
+            # fail silently?
+            pass
+
+        target, text = args
+
+        if re.match('#', target):
+            self.server.notify_channel(target,
+                    sender = self,
+                    message = 'PRIVMSG %s :%s' % (target, text),
+                    notify_sender = False)
+        else:
+            # TODO, nick/etc messaging
+            pass
+
     def helper_not_in_channel(self, channel_name):
         self.server.logger.debug("Topic request from nick %s "+ \
                                      "not a member of channel %s",
@@ -148,21 +186,18 @@ class IrcClient:
         return ''.join([mode for mode, enabled in self.modes.items() if enabled])
 
     def cmd(self, command, args):
-        if command == 'MOTD':
-            self.cmd_motd(args)
-        elif command == 'JOIN':
-            self.cmd_join(args)
-        elif command == 'TOPIC':
-            self.cmd_topic(args)
-        elif command == 'MODE':
-            self.cmd_mode(args)
-        else:
+        try:
+            getattr(self, 'cmd_%s' % command.lower())(args)
+        except AttributeError as err:
             self.server.logger.warning("Unimplemented command %s with args %s",
                                        command,
                                        args)
 
     def prefix(self):
-        return ":%s" % self.connection.nick
+        nick = self.connection.nick
+        username = self.connection.user[0]
+        host = self.connection.getsockname()[0]
+        return ":%s!%s@%s" % (nick, username, host)
 
 class IrcServer:
     def cmd_server(self, args):
