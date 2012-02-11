@@ -184,11 +184,14 @@ class IrcDispatcher(asyncore.dispatcher):
         self.clients = dict()
         self.servers = dict()
         self.channels = dict()
+        self.user_modes = dict()
+        for i in irc.IRC_MODES:
+            self.user_modes[i] = True
+        self.channel_modes = dict()
+        for i in irc.IRC_CHANNEL_MODES:
+            self.channel_modes[i] = True
 
         self.version = self.gen_version()
-        #TODO return correct user modes
-        self.usermodes = "FIXME-usermodes"
-        self.channelmodes = "FIXME-channelmodes"
         self.launched = time.strftime("%c %Z")
 
     def channel_add(self, channel):

@@ -1,6 +1,7 @@
 '''IRC Numeric Message Constants'''
 IRC_MODES = ['a', 's', 'i', 'w', 'o', 'O', 'r' ]
 IRC_USER_MODES = [ 'i', 'w', 'o', 'O', 'r' ]
+IRC_CHANNEL_MODES = ['o', 'p', 's', 'i', 't', 'n', 'b', 'v']
 
 RPL_WELCOME = 1
 RPL_YOURHOST = 2

@@ -38,8 +38,8 @@ class IrcClient:
         self.connection._send(irc.RPL_MYINFO, '%s %s %s %s',
                               self.server.name,
                               self.server.version,
-                              self.server.usermodes,
-                              self.server.channelmodes)
+                              irc.mode_str(self.server.user_modes),
+                              irc.mode_str(self.server.channel_modes))
 
         self.cmd_motd(list())
 
