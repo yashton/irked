@@ -171,7 +171,7 @@ class IrcClient:
                                   ":Cannot change mode for other users")
             return
         if len(args) == 0:
-            self.connection_send(irc.RPL_UMODEIS, self.mode_str())
+            self.connection_send(irc.RPL_UMODEIS, irc.mode_str(self.modes))
             return
         op, flag = args[0]
         if flag not in irc.IRC_USER_MODES or op != '+' or op != '-':
@@ -181,9 +181,6 @@ class IrcClient:
 
     def cmd_chan_mode(self, target, args):
         self.server.logger.debug("MODE channel %s: %s", target, args)
-
-    def mode_str(self):
-        return ''.join([mode for mode, enabled in self.modes.items() if enabled])
 
     def cmd(self, command, args):
         try:

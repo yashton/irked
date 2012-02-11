@@ -328,3 +328,8 @@ CHANNEL_PREFIX = ['&', '#', '+', '!']
 
 def is_channel_name(name):
    return len(name[1:]) < 200 and name[0] in CHANNEL_PREFIX
+
+def mode_str(modes):
+   '''Return a  concatenated string of active mode flags.
+   Input is a dictionary of single char flag IDs to boolean.'''
+   return ''.join([mode for mode, enabled in modes.items() if enabled])
