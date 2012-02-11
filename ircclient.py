@@ -171,10 +171,10 @@ class IrcClient:
                                   ":Cannot change mode for other users")
             return
         if len(args) == 0:
-            self.connection_send(irc.RPL_UMODEIS, irc.mode_str(self.modes))
+            self.connection._send(irc.RPL_UMODEIS, irc.mode_str(self.modes))
             return
         op, flag = args[0]
-        if flag not in irc.IRC_USER_MODES or op != '+' or op != '-':
+        if not (flag in irc.IRC_USER_MODES and (op != '+' or op != '-')):
             self.connection._send(irc.ERR_UMODEUNKNOWNFLAG, ":Unknown MODE flag")
             return
         self.modes[flag] = op == "+"
@@ -184,11 +184,13 @@ class IrcClient:
 
     def cmd(self, command, args):
         try:
-            getattr(self, 'cmd_%s' % command.lower())(args)
+            cmd = getattr(self, 'cmd_%s' % command.lower())
         except AttributeError as err:
             self.server.logger.warning("Unimplemented command %s with args %s",
                                        command,
                                        args)
+            return
+        cmd(args)
 
     def prefix(self):
         nick = self.connection.nick
