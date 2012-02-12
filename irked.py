@@ -153,6 +153,9 @@ class IrcHandler(asyncore.dispatcher):
         self.raw_send(msg)
 
     def raw_send(self, message):
+        self.server.logger.debug("sent to %s: '%s'",
+                                 self.nick,
+                                 message.rstrip("\r\n"))
         self.out_buffer += message.encode()
 
     def readable(self):

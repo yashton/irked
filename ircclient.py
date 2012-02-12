@@ -160,6 +160,16 @@ class IrcClient:
             # TODO, nick/etc messaging
             pass
 
+    def cmd_ping(self, args):
+        # TODO: multi-server stuff
+        if not len(args):
+            self.connection._send(irc.ERR_NEEDMOREPARAMS,
+                                  "PING :Not enough parameters")
+        target = args[0]
+
+        self.connection.raw_send("%s PONG :%s\r\n" %
+                                 (self.server.prefix(), target))
+
     def helper_not_in_channel(self, channel_name):
         self.server.logger.debug("Topic request from nick %s "+ \
                                      "not a member of channel %s",
