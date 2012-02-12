@@ -169,7 +169,7 @@ class IrcHandler(asyncore.dispatcher):
 
 class IrcDispatcher(asyncore.dispatcher):
 
-    def __init__(self, host, port):
+    def __init__(self, host, port, name = ''):
         self.motd = MOTD_FILE
 
         self.logger = logging.getLogger(LOGGER)
@@ -186,10 +186,8 @@ class IrcDispatcher(asyncore.dispatcher):
         self.listen(5)
         self.logger.info('Listening on port %s', port)
 
-        if len(host) == 0:
-            self.name = _socket.gethostname()
-        else:
-            self.name = host
+        if len(name) == 0:
+            self.name = 'irked.server' # config option
 
         self.connections = set()
         self.clients = dict()
@@ -222,7 +220,7 @@ class IrcDispatcher(asyncore.dispatcher):
 
     def prefix(self):
         # FIXME
-        return ":server"
+        return ':%s' % self.name
 
     def __repr__(self):
         return "<IrcServer: clients=" + repr(self.connections) + " names=" + repr(self.clients.keys()) + " channels=" + repr(self.channels) + ">"
