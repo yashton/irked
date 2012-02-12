@@ -170,6 +170,11 @@ class IrcClient:
         self.connection.raw_send("%s PONG :%s\r\n" %
                                  (self.server.prefix(), target))
 
+    def cmd_away(self, args):
+        # not implementing this for now (it's an optional feature)
+        self.connection._send(irc.RPL_UNAWAY,
+                             ":You are no longer marked as being away")
+
     def helper_not_in_channel(self, channel_name):
         self.server.logger.debug("Topic request from nick %s "+ \
                                      "not a member of channel %s",
