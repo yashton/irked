@@ -75,14 +75,14 @@ class IrcClient:
             self.connection._send(irc.ERR_NEEDMOREPARAMS,
                                   "PART :Not enough parameters")
 
-        # TODO: support leaving multiple channels at once
-        channel = args[0]
+        channels = re.split(",", args[0])
 
         part_message = None
         if len(args) == 2:
             part_message = args[1]
 
-        self.server.channels[channel].remove(self, part_message)
+        for channel in channels:
+            self.server.channels[channel].remove(self, part_message)
 
     def cmd_quit(self, args):
         to_notify = set({self})
