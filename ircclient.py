@@ -52,14 +52,23 @@ class IrcClient:
         self.connection._send(irc.RPL_ENDOFMOTD, ":End of MOTD command")
 
     def cmd_join(self, args):
-        # TODO: support multiple channels at once
-        # TODO: support leaving all channels ('0')
         # TODO: support keys
-        channel = args[0]
 
-        if channel not in self.server.channels:
-            self.server.channel_add(channel)
-        self.server.channels[channel].add(self)
+        if len(args) == 0:
+            self.connection._send(irc.ERR_NEEDMOREPARAMS,
+                                  "JOIN :Not enough parameters")
+            return
+
+        if args[0] =="0":
+            for channel in self.server.channels.values():
+                channel.remove(self)
+            return
+
+        channels = re.split(",", args[0])
+        for channel in channels:
+            if channel not in self.server.channels:
+                self.server.channel_add(channel)
+            self.server.channels[channel].add(self)
 
     def cmd_part(self, args):
         if len(args) == 0:
