@@ -61,7 +61,7 @@ class IrcClient:
         channel = args[0]
 
         if channel not in self.server.channels:
-            self.server.channel_add(channel)
+            self.server.channel_add(channel, self)
         self.server.channels[channel].add(self)
 
     def cmd_part(self, args):
@@ -180,6 +180,25 @@ class IrcClient:
         self.modes[flag] = op == "+"
 
     def cmd_chan_mode(self, target, args):
+        #TODO Only handling single mode changes
+        if len(args) == 0:
+            modes = self.server.channels[target].modes.user_mode(self.connection.nick)
+            self.connection._send(irc.RPL_CHANNELMODEIS, "%s %s %s",
+                                  self.connection.nick, target, modes)
+        elif len(args) == 1:
+            pass
+        elif len(args) == 2:
+            pass
+
+#           ERR_NEEDMOREPARAMS              ERR_KEYSET
+#           ERR_NOCHANMODES                 ERR_CHANOPRIVSNEEDED
+#           ERR_USERNOTINCHANNEL            ERR_UNKNOWNMODE
+#           RPL_CHANNELMODEIS
+#           RPL_BANLIST                     RPL_ENDOFBANLIST
+#           RPL_EXCEPTLIST                  RPL_ENDOFEXCEPTLIST
+#           RPL_INVITELIST                  RPL_ENDOFINVITELIST
+#           RPL_UNIQOPIS
+
         self.server.logger.debug("MODE channel %s: %s", target, args)
 
     def cmd(self, command, args):

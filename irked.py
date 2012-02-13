@@ -194,8 +194,9 @@ class IrcDispatcher(asyncore.dispatcher):
         self.version = self.gen_version()
         self.launched = time.strftime("%c %Z")
 
-    def channel_add(self, channel):
+    def channel_add(self, channel, owner):
         self.channels[channel] = Channel(channel, self)
+        self.channels[channel].modes.creator = owner
 
     def handle_accepted(self, socket, port):
         self.logger.info('Yay, connection from %s', repr(port))
@@ -238,6 +239,7 @@ class Channel:
         self.clients = set()
         self.topic   = None
 
+        self.modes = ChannelMode()
         self.server  = server
 
     def add(self, client):
@@ -272,6 +274,28 @@ class Channel:
     def _send(self, sender, message, notify_sender = True):
         self.server.notify_channel(self.name, sender, message, notify_sender)
 
+class ChannelMode:
+    def __init__(self):
+        self.creator = None
+        self.operators = set()
+        self.voice = set()
+
+        self.anonymous = False
+        self.moderated = False
+        self.invite = False
+        self.no_message = False
+        self.quiet = False
+        self.private = False
+        self.secret = False
+        self.reop = False
+        self.topic = False
+
+        self.ban_masks = set()
+        self.exception_masks = set()
+        self.invitation_masks = set()
+
+    def user_mode(self, nick):
+        return "+ns"
 
 if __name__ == '__main__':        
     server = IrcDispatcher('', 6667)
