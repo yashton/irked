@@ -1,4 +1,7 @@
 '''IRC Numeric Message Constants'''
+IRC_MODES = ['a', 's', 'i', 'w', 'o', 'O', 'r' ]
+IRC_USER_MODES = [ 'i', 'w', 'o', 'O', 'r' ]
+IRC_CHANNEL_MODES = ['o', 'p', 's', 'i', 't', 'n', 'b', 'v']
 
 RPL_WELCOME = 1
 RPL_YOURHOST = 2
@@ -321,3 +324,13 @@ IRC_CODE = {
 501 : "ERR_UMODEUNKNOWNFLAG",
 502 : "ERR_USERSDONTMATCH",
 }
+
+CHANNEL_PREFIX = ['&', '#', '+', '!']
+
+def is_channel_name(name):
+   return len(name[1:]) < 200 and name[0] in CHANNEL_PREFIX
+
+def mode_str(modes):
+   '''Return a  concatenated string of active mode flags.
+   Input is a dictionary of single char flag IDs to boolean.'''
+   return ''.join([mode for mode, enabled in modes.items() if enabled])

@@ -149,7 +149,7 @@ class IrcHandler(asyncore.dispatcher):
     def _send(self, code, message, *format_args):
         formatted_message = message % format_args
         msg = '%s %03d %s %s\n' % (self.server.prefix(), code, self.nick, formatted_message)
-        self.server.logger.debug("sent to %s: '%s'", self.nick, msg[:-1])
+        self.server.logger.debug("sent to %s: '%s'", self.nick, msg.rstrip())
         self.raw_send(msg)
 
     def raw_send(self, message):
@@ -193,15 +193,20 @@ class IrcDispatcher(asyncore.dispatcher):
         self.clients = dict()
         self.servers = dict()
         self.channels = dict()
+        self.user_modes = dict()
+        for i in irc.IRC_MODES:
+            self.user_modes[i] = True
+        self.channel_modes = dict()
+        for i in irc.IRC_CHANNEL_MODES:
+            self.channel_modes[i] = True
 
         self.version = self.gen_version()
-        #TODO return correct user modes
-        self.usermodes = "FIXME-usermodes"
-        self.channelmodes = "FIXME-channelmodes"
         self.launched = time.strftime("%c %Z")
 
-    def channel_add(self, channel):
+    def channel_add(self, channel, owner):
         self.channels[channel] = Channel(channel, self)
+        self.channels[channel].modes.creator = owner
+        self.channels[channel].modes.operators.add(owner)
 
     def handle_accepted(self, socket, port):
         self.logger.info('Yay, connection from %s', repr(port))
@@ -244,6 +249,7 @@ class Channel:
         self.clients = set()
         self.topic   = None
 
+        self.modes = ChannelMode()
         self.server  = server
 
     def add(self, client):
@@ -279,6 +285,32 @@ class Channel:
     def _send(self, sender, message, notify_sender = True):
         self.server.notify_channel(self.name, sender, message, notify_sender)
 
+class ChannelMode:
+    def __init__(self):
+        self.creator = None
+        self.operators = set()
+        self.voice = set()
+
+        self.anonymous = False
+        self.moderated = False
+        self.invite = False
+        self.no_message = False
+        self.quiet = False
+        self.private = False
+        self.secret = False
+        self.reop = False
+        self.topic = False
+
+        self.ban_masks = set()
+        self.exception_masks = set()
+        self.invite_masks = set()
+
+        self.key = None
+        self.limit = None
+
+    def user_mode(self, nick):
+        #TODO return real values
+        return "+ns"
 
 if __name__ == '__main__':        
     server = IrcDispatcher('', 6667)
