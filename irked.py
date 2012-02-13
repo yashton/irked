@@ -49,8 +49,16 @@ class IrcHandler(asyncore.dispatcher):
                 self.dispatch(bytes.decode(message))
 
     def handle_write(self):
+        self._flush()
+
+    def _flush(self):
         sent = self.send(self.out_buffer)
         self.out_buffer = self.out_buffer[sent:]
+
+    def close(self):
+        while len(self.out_buffer):
+            self._flush()
+        asyncore.dispatcher.close(self)
 
     def parse(self, message):
         # this stuff will be useful for the server, but the client message
@@ -145,6 +153,9 @@ class IrcHandler(asyncore.dispatcher):
         self.raw_send(msg)
 
     def raw_send(self, message):
+        self.server.logger.debug("sent to %s: '%s'",
+                                 self.nick,
+                                 message.rstrip("\r\n"))
         self.out_buffer += message.encode()
 
     def readable(self):
@@ -158,7 +169,7 @@ class IrcHandler(asyncore.dispatcher):
 
 class IrcDispatcher(asyncore.dispatcher):
 
-    def __init__(self, host, port):
+    def __init__(self, host, port, name = ''):
         self.motd = MOTD_FILE
 
         self.logger = logging.getLogger(LOGGER)
@@ -175,10 +186,8 @@ class IrcDispatcher(asyncore.dispatcher):
         self.listen(5)
         self.logger.info('Listening on port %s', port)
 
-        if len(host) == 0:
-            self.name = _socket.gethostname()
-        else:
-            self.name = host
+        if len(name) == 0:
+            self.name = 'irked.server' # config option
 
         self.connections = set()
         self.clients = dict()
@@ -215,7 +224,7 @@ class IrcDispatcher(asyncore.dispatcher):
 
     def prefix(self):
         # FIXME
-        return ":server"
+        return ':%s' % self.name
 
     def __repr__(self):
         return "<IrcServer: clients=" + repr(self.connections) + " names=" + repr(self.clients.keys()) + " channels=" + repr(self.channels) + ">"
@@ -256,10 +265,11 @@ class Channel:
 
     def remove(self, client, message = None, parted = True):
         if client in self.clients:
-            if message:
-                self._send(client, 'PART %s :%s' % (self.name, message))
-            else:
-                self._send(client, 'PART %s' % self.name)
+            if parted:
+                if message:
+                    self._send(client, 'PART %s :%s' % (self.name, message))
+                else:
+                    self._send(client, 'PART %s' % self.name)
             self.clients.remove(client)
         else:
             client.connection._send(irc.ERR_NOTONCHANNEL,

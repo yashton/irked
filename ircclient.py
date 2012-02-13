@@ -60,33 +60,62 @@ class IrcClient:
         # TODO: support keys
         channel = args[0]
 
-        if channel not in self.server.channels:
-            self.server.channel_add(channel, self)
-        self.server.channels[channel].add(self)
+        if len(args) == 0:
+            self.connection._send(irc.ERR_NEEDMOREPARAMS,
+                                  "JOIN :Not enough parameters")
+            return
+
+        if args[0] =="0":
+            for channel in self.server.channels.values():
+                channel.remove(self)
+            return
+
+        channels = re.split(",", args[0])
+        for channel in channels:
+            if channel not in self.server.channels:
+                self.server.channel_add(channel, self)
+            self.server.channels[channel].add(self)
 
     def cmd_part(self, args):
         if len(args) == 0:
             self.connection._send(irc.ERR_NEEDMOREPARAMS,
                                   "PART :Not enough parameters")
 
-        # TODO: support leaving multiple channels at once
-        channel = args[0]
+        channels = re.split(",", args[0])
 
         part_message = None
         if len(args) == 2:
             part_message = args[1]
 
-        self.server.channels[channel].remove(self, part_message)
+        for channel in channels:
+            self.server.channels[channel].remove(self, part_message)
 
     def cmd_quit(self, args):
-        self.server.clients.remove(self)
-        
-        # TODO: notify relevant servers/clients
-        
-        if self.connection.registered:
-            del self.server[self.connection.nick]
+        to_notify = set({self})
+        to_leave = set()
+        for channel in self.server.channels.values():
+            if self in channel.clients:
+                to_leave.add(channel)
+                to_notify |= channel.clients
 
-        # TODO: send error message (see RFC)
+        if len(args):
+            message = '%s QUIT :%s\r\n' % (self.prefix(), args[0])
+            err_msg = 'ERROR :Closing Link: %s (%s)\r\n' % (self.prefix(), args[0])
+        else:
+            message = '%s QUIT\r\n' % self.prefix()
+            err_msg = 'ERROR :Closing Link: %s\r\n' % self.prefix()
+
+        for client in to_notify:
+            client.connection.raw_send(message)
+
+        for channel in to_leave:
+            channel.remove(self, parted = False)
+
+        self.server.connections.remove(self.connection)
+        del self.server.clients[self.connection.nick]
+
+        # send error message (see RFC)
+        self.connection.raw_send(err_msg)
         self.connection.close()
 
     def cmd_topic(self, args):
@@ -145,6 +174,21 @@ class IrcClient:
         else:
             # TODO, nick/etc messaging
             pass
+
+    def cmd_ping(self, args):
+        # TODO: multi-server stuff
+        if not len(args):
+            self.connection._send(irc.ERR_NEEDMOREPARAMS,
+                                  "PING :Not enough parameters")
+        target = args[0]
+
+        self.connection.raw_send("%s PONG :%s\r\n" %
+                                 (self.server.prefix(), target))
+
+    def cmd_away(self, args):
+        # not implementing this for now (it's an optional feature)
+        self.connection._send(irc.RPL_UNAWAY,
+                             ":You are no longer marked as being away")
 
     def helper_not_in_channel(self, channel_name):
         self.server.logger.debug("Topic request from nick %s "+ \
