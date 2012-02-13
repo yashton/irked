@@ -150,6 +150,23 @@ class IrcClient:
                 self.connection._send(irc.RPL_TOPIC, "%s :%s",
                                       channel_name, channel.topic)
 
+    def cmd_list(self, args):
+        # TODO: server target
+
+        # TODO: this probably needs to support some channel mode stuff
+        if len(args):
+            names = re.split(",", args[0])
+            channels = [self.server.channels[n] for n in names if n in self.server.channels]
+        else:
+            channels = self.server.channels.values()
+
+        for channel in channels:
+            self.connection._send(irc.RPL_LIST, "%s %d :%s",
+                    channel.name,
+                    len(channel.clients), # need to check visibility here
+                    channel.topic or "")
+        self.connection._send(irc.RPL_LISTEND, ":End of LIST")
+
     def cmd_privmsg(self, args):
         if len(args) == 0:
             self.connection._send(irc.ERR_NORECIPIENT,
