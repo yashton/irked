@@ -309,6 +309,7 @@ class ChannelMode:
         self.limit = None
 
     def user_mode(self, nick):
+        #TODO return real values
         return "+ns"
 
 if __name__ == '__main__':        
