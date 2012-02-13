@@ -1,5 +1,6 @@
 import os.path
 import re
+import time
 import irc
 
 class IrcClient:
@@ -83,6 +84,11 @@ class IrcClient:
 
         for channel in channels:
             self.server.channels[channel].remove(self, part_message)
+
+    def cmd_time(self, args):
+        # TODO: multi-server stuff
+        self.connection._send(irc.RPL_TIME, "%s :%s",
+                              self.server.name, time.asctime(time.localtime()))
 
     def cmd_quit(self, args):
         to_notify = set({self})
