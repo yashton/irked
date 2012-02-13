@@ -11,7 +11,7 @@ Squit
 Channel mode
 * Topic
 - Names
-List
+- List
 Invite
 Kick
 Private
@@ -21,7 +21,7 @@ Lusers
 * Version
 Stats
 Links
-Time
+- Time
 Connect
 Trace
 Admin
