@@ -224,26 +224,148 @@ class IrcClient:
         self.modes[flag] = op == "+"
 
     def cmd_chan_mode(self, target, args):
+        self.server.logger.debug("MODE channel %s: %s", target, args)
+        channel = self.server.channels[target]
+        if channel.modes is None:
+            self.connection._send(irc.ERR_NOCHANMODES,
+                                  "%s :Channel doesn't support modes", target)
         #TODO Only handling single mode changes
         if len(args) == 0:
-            modes = self.server.channels[target].modes.user_mode(self.connection.nick)
+            modes = channel.modes.user_mode(self.connection.nick)
             self.connection._send(irc.RPL_CHANNELMODEIS, "%s %s %s",
                                   self.connection.nick, target, modes)
         elif len(args) == 1:
-            pass
+            if self not in channel.modes.operators:
+                self.helper_chan_op_privs_needed(target)
+                return
+            command = args[0]
+            if command == '+a' or command == '-a':
+                channel.modes.anonymous = command[0] == '+'
+            elif command == '+m' or command == '-m':
+                channel.modes.moderated = command[0] == '+'
+            elif command == '+i' or command == '-i':
+                channel.modes.invite = command[0] == '+'
+            elif command == '+n' or command == '-n':
+                channel.modes.no_message = command[0] == '+'
+            elif command == '+p' or command == '-p':
+                channel.modes.private = command[0] == '+'
+            elif command == '+s' or command == '-s':
+                channel.modes.secret = command[0] == '+'
+            elif command == '+r' or command == '-r':
+                if target[0] == '!':
+                    channel.modes.reop = command[0] == '+'
+            elif command == '+t' or command == '-t':
+                channel.modes.topic = command[0] == '+'
+            elif command == '-l':
+                channel.modes.limit = None
+            elif command == '-k':
+                channel.modes.key = None
+            elif command == '+b':
+                self.helper_ban_list(target, channel)
+            elif command == '+e':
+                self.helper_exception_list(target, channel)
+            elif command == '+I':
+                self.helper_invite_list(target, channel)
+            elif command == 'O':
+                self.connection._send(irc.RPL_UNIQOPIS,
+                                      "%s %s",
+                                      target, channel.modes.creator.connection.nick)
+            else:
+                self.connection._send(irc.ERR_UNKNOWNMODE,
+                                      "%s :is unknown mode char to me for %s",
+                                      command, target)
         elif len(args) == 2:
-            pass
+            if self not in channel.modes.operators:
+                self.helper_chan_op_privs_needed(target)
+                return
+            command, param = args
+            if command == '+k':
+                if channel.modes.key is None:
+                    channel.modes.key = param
+                else:
+                    self.connection._send(irc.ERR_KEYSET,
+                                          "%s :Channel key already set", target)
+            elif command == '+l':
+                channel.limit = int(param)
+            elif command == '+o' or command == '-o':
+                client = self.server.clients[param]
+                if client not in channel.clients:
+                    self.helper_not_in_channel(param, target)
+                else:
+                    if command[0] == '+':
+                        channel.modes.operators.add(client)
+                    else:
+                        try:
+                            channel.modes.operators.remove(client)
+                        except KeyError:
+                            pass
+            elif command == '+v' or command == '-v':
+                client = self.server.clients[param]
+                if client not in channel.clients:
+                    self.helper_not_in_channel(param, target)
+                else:
+                    if command[0] == '+':
+                        channel.modes.voice.add(client)
+                    else:
+                        try:
+                            channel.modes.voice.remove(client)
+                        except KeyError:
+                            pass
+            elif command == '+I' or command == '-I':
+                if command[0] == '+':
+                    channel.invite_masks.add(param)
+                else:
+                    try:
+                        channel.invite_masks.remove(param)
+                    except KeyError:
+                        pass
+            elif command == '+b' or command == '-b':
+                if command[0] == '+':
+                    channel.ban_masks.add(param)
+                else:
+                    try:
+                        channel.ban_masks.remove(param)
+                    except KeyError:
+                        pass
+            elif command == '+e' or command == '-e':
+                if command[0] == '+':
+                    channel.exception_masks.add(param)
+                else:
+                    try:
+                        channel.exception_masks.remove(param)
+                    except KeyError:
+                        pass
+        else:
+            self.connection._err_need_more_params('MODE')
 
-#           ERR_NEEDMOREPARAMS              ERR_KEYSET
-#           ERR_NOCHANMODES                 ERR_CHANOPRIVSNEEDED
-#           ERR_USERNOTINCHANNEL            ERR_UNKNOWNMODE
-#           RPL_CHANNELMODEIS
-#           RPL_BANLIST                     RPL_ENDOFBANLIST
-#           RPL_EXCEPTLIST                  RPL_ENDOFEXCEPTLIST
-#           RPL_INVITELIST                  RPL_ENDOFINVITELIST
-#           RPL_UNIQOPIS
+    def helper_ban_list(self, channel_name, channel):
+        for mask in channel.ban_masks:
+            self.connection._send(irc.RPL_BANLIST, "%s %s", channel_name, mask)
+        self.connection._send(irc.RPL_ENDOFBANLIST,
+                              "%s :End of channel ban list", channel_name)
 
-        self.server.logger.debug("MODE channel %s: %s", target, args)
+    def helper_exception_list(self, channel_name, channel)
+        for mask in channel.exception_masks:
+            self.connection._send(irc.RPL_EXCEPTLIST, "%s %s", channel_name, mask)
+        self.connection._send(irc.RPL_ENDOFEXCEPTLIST,
+                              "%s :End of channel exception list", channel_name)
+
+    def helper_invite_list(self, channel_name, channel):
+        for mask in channel.invite_masks:
+            self.connection._send(irc.RPL_BANLIST, "%s %s", channel_name, mask)
+        self.connection._send(irc.RPL_ENDOFBANLIST,
+                              "%s :End of channel invite list", channel_name)
+
+
+    def helper_not_in_channel(self, nick, channel):
+        self.connection._send(irc.ERR_USERNOTINCHANNEL,
+                              "%s %s :They aren't on that channel",
+                              nick, channel)
+
+    def helper_chan_op_privs_needed(self, channel):
+        self.connection._send(irc.ERR_CHANOPRIVSNEEDED,
+                              "%s :You're not channel operator", channel)
+
 
     def cmd(self, command, args):
         try:

@@ -206,6 +206,7 @@ class IrcDispatcher(asyncore.dispatcher):
     def channel_add(self, channel, owner):
         self.channels[channel] = Channel(channel, self)
         self.channels[channel].modes.creator = owner
+        self.channels[channel].modes.operators.add(owner)
 
     def handle_accepted(self, socket, port):
         self.logger.info('Yay, connection from %s', repr(port))
@@ -302,7 +303,10 @@ class ChannelMode:
 
         self.ban_masks = set()
         self.exception_masks = set()
-        self.invitation_masks = set()
+        self.invite_masks = set()
+
+        self.key = None
+        self.limit = None
 
     def user_mode(self, nick):
         return "+ns"
