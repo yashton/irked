@@ -369,6 +369,39 @@ class IrcClient(IrcClientMessageMixin):
         self.connection._send(irc.RPL_YOUREOPER, ':You are now an IRC operator')
         self.connection._send(irc.RPL_UMODEIS, irc.mode_str(self.modes))
 
+
+    def cmd_invite(self, args):
+        '''Implements RCF 2812 Section 3.2.7 and RFC 1459 Section 4.2.7'''
+        if len(args) != 2:
+            self.connection._err_need_more_params('INVITE')
+            return
+        nickname, channel_name = args
+        if nickname not in self.server.clients:
+            self.connection._send(irc.ERR_NOSUCHNICK,
+                                  '%s :No such nick/channel', nickname)
+            return
+        target = self.server.clients[nickname]
+        # (irc.RPL_AWAY, '%s :%s', nickname, away_message)
+        if channel_name in self.server.channels:
+            channel = self.server.channels[channel_name]
+            if self not in channel.clients:
+                self.connection._send(irc.ERR_NOTONCHANNEL,
+                                      "%s :You're not on that channel",
+                                      channel_name)
+                return
+            elif target in channel.clients:
+                self.connection._send(irc.ERR_USERONCHANNEL,
+                                      '%s %s :is already on channel',
+                                      nickname, channel_name)
+                return
+            elif channel.modes.invite and self not in channel.modes.operators:
+                self.connection._send(irc.ERR_CHANOPRIVSNEEDED,
+                                      "%s :You're not channel operator",
+                                      channel_name)
+                return
+        self.connection._send(irc.RPL_INVITING, '%s %s', nickname, channel_name)
+        target.connection._send(irc.RPL_INVITING, '%s %s', nickname, channel_name)
+
     def cmd(self, command, args):
         try:
             cmd = getattr(self, 'cmd_%s' % command.lower())
