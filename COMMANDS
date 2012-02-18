@@ -1,37 +1,43 @@
+- Partial Impl.
+* Full
+! Need
+
 - Password
 * Nick
 - User
-Oper
+! Oper
 - User mode
-Service
 * Quit
 Squit
 - Join
 * Part
-Channel mode
+- Channel mode
 * Topic
 - Names
 - List
-Invite
-Kick
-Private
+! Invite
+! Kick
+! Private
 Notice
 * Motd
-Lusers
+! Lusers
 * Version
-Stats
-Links
+Stats (Plugin)
 - Time
-Connect
-Trace
-Admin
-Info
-Servlist
-Squery
+! Info
 Who
-Whois
+! Whois
 Whowas
-Kill
+! Kill
 - Ping
 Pong
 Error
+
+Multi-server
+Service
+Links
+Servlist
+Squery
+Connect
+Trace
+Admin
