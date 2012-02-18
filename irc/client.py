@@ -233,7 +233,7 @@ class IrcClient(IrcClientMessageMixin):
             self.connection._send(irc.RPL_UMODEIS, irc.mode_str(self.modes))
             return
         op, flag = args[0]
-        if not (flag in irc.IRC_USER_MODES and (op != '+' or op != '-')):
+        if not (flag in irc.IRC_USER_MODES and (op != '+' or op != '-')) or args[0] == '+o':
             self.connection._send(irc.ERR_UMODEUNKNOWNFLAG, ":Unknown MODE flag")
             return
         self.modes[flag] = op == "+"
@@ -352,6 +352,22 @@ class IrcClient(IrcClientMessageMixin):
                         pass
         else:
             self.connection._err_need_more_params('MODE')
+
+    def cmd_oper(self, args):
+        if len(args) != 2:
+            self.connection._err_need_more_params('OPER')
+            return
+        username, password = args
+        if not self.server.allows_oper():
+            self.connection._send(irc.ERR_NOOPERHOST,
+                                  ':No O-lines for your host')
+            return
+        if not self.server.is_valid_oper_pass(username, password):
+            self.connection._send(irc.ERR_PASSWDMISMATCH, ':Password incorrect')
+            return
+        self.modes['o'] = True
+        self.connection._send(irc.RPL_YOUREOPER, ':You are now an IRC operator')
+        self.connection._send(irc.RPL_UMODEIS, irc.mode_str(self.modes))
 
     def cmd(self, command, args):
         try:

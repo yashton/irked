@@ -243,6 +243,14 @@ class IrcDispatcher(asyncore.dispatcher):
         except CalledProcessError:
             return "unknown"
 
+    def is_valid_oper_pass(self, username, password):
+        #TODO O-line implementation
+        return True
+
+    def allows_oper(self):
+        #TODO O-line implementation
+        return True
+
 class Channel:
     def __init__(self, name, server):
         self.name    = name
