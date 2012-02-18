@@ -367,7 +367,7 @@ class IrcClient:
         self.connection._send(irc.RPL_ENDOFBANLIST,
                               "%s :End of channel ban list", channel_name)
 
-    def helper_exception_list(self, channel_name, channel)
+    def helper_exception_list(self, channel_name, channel):
         for mask in channel.exception_masks:
             self.connection._send(irc.RPL_EXCEPTLIST, "%s %s", channel_name, mask)
         self.connection._send(irc.RPL_ENDOFEXCEPTLIST,
