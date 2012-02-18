@@ -7,7 +7,7 @@ import re
 import irc
 import time
 import subprocess
-from ircclient import IrcClient, IrcServer
+from irc.client import IrcClient, IrcServer
 
 MOTD_FILE = "motd"
 
