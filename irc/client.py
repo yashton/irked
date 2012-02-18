@@ -174,6 +174,42 @@ class IrcClient(IrcClientMessageMixin):
                     channel.topic or "")
         self.connection._send(irc.RPL_LISTEND, ":End of LIST")
 
+    def cmd_kick(self, args):
+        """ KICK command, rfc2812 3.2.8 """
+
+        # TODO: channel can be a chanmask
+
+        if len(args) < 2:
+            self.connection._send(irc.ERR_NEEDMOREPARAMS,
+                                  "KICK :Not enough parameters")
+            return
+
+        chan_list, user_list = args[0:2]
+
+        channels = re.split(",", chan_list)
+        users = re.split(",", user_list)
+
+        # according to the RFC, there must be one channel and multiple users,
+        # or an equal number of channels and users.  There is no error response
+        # for invalid messages though, so I'm just going to truncate the input
+        if len(channels) != 1 and len(channels) != len(users):
+            channels = channels[0]
+
+        comment = None
+        if len(args) > 2:
+            comment = args[2]
+
+        if len(channels) == 1:
+            channel = self.server.channels[channels[0]]
+            if not channel:
+                self.connection._send(irc.ERR_NOSUCHCHANNEL,
+                        "%s :No such channel", channels[0])
+                return
+            for user in users:
+                channel.kick(self, user, comment)
+        else:
+            pass # TODO
+
     def cmd_privmsg(self, args):
         if len(args) == 0:
             self.connection._send(irc.ERR_NORECIPIENT,

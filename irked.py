@@ -284,6 +284,29 @@ class Channel:
             client.connection._send(irc.ERR_NOTONCHANNEL,
                     "%s :You're not on that channel" % self.name)
 
+    def kick(self, kicker, kickee, reason):
+        # TODO: kickee probably can be more than just a nick
+
+        if kicker not in self.clients:
+            kicker.connection._send(irc.ERR_NOTONCHANNEL,
+                    "%s :You're not on that channel" % self.name)
+            return
+
+        if kicker not in channel.modes.operators:
+            kicker.connection._send(irc.ERR_CHANOPRIVSNEEDED,
+                                  "%s :You're not channel operator", self.name)
+            return
+
+        if kickee not in [c.connection.nick for c in self.clients]:
+            kicker.connection_send(irc.ERR_USERNOTINCHANNEL,
+                    "%s %s :They aren't on that channel", kickee, self.name)
+            return
+
+        if not reason:
+            reason = kickee
+
+        self._send(kicker, "KICK %s %s :%s" % (self.name, kickee, reason))
+
     def rpl_name_reply(self, client):
         # TODO: probably need to split the names list up in case it's too long
         names = [c.connection.nick for c in self.clients]
