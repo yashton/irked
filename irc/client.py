@@ -468,6 +468,21 @@ class IrcClient(IrcClientMessageMixin):
             self.connection._send(irc.ERR_NOSUCHSERVER,
                                   '%s :No such server', server_name)
 
+    def cmd_version(self, args):
+        if len(args) > 0:
+            #TODO Multi server info
+            server_name = args[0]
+            self.connection._send(irc.ERR_NOSUCHSERVER,
+                                  '%s :No such server', server_name)
+            return
+        version = self.server.version
+        comment = self.server.version_comment
+        debug = self.server.logger.getEffectiveLevel()
+        server = self.server.name
+        self.connection._send(irc.RPL_VERSION,
+                              '%s.%d %s :%s',
+                              version, debug, server, comment)
+
     def cmd(self, command, args):
         try:
             cmd = getattr(self, 'cmd_%s' % command.lower())

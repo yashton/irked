@@ -202,6 +202,7 @@ class IrcDispatcher(asyncore.dispatcher):
             self.channel_modes[i] = True
 
         self.version = self.gen_version()
+        self.version_comment = 'Development'
         self.launched = time.strftime("%c %Z")
 
     def channel_add(self, channel, owner):
