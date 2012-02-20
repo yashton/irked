@@ -7,9 +7,11 @@ import re
 import irc
 import time
 import subprocess
+import os.path
 from irc.client import IrcClient, IrcServer
 
 MOTD_FILE = "motd"
+INFO_FILE = "info"
 
 LOG_FILE = "irked.log"
 LOG_FORMAT = "%(asctime)s %(filename)s:" + \
@@ -169,6 +171,7 @@ class IrcDispatcher(asyncore.dispatcher):
 
     def __init__(self, host, port, name = ''):
         self.motd = MOTD_FILE
+        self.info_file = INFO_FILE
 
         self.logger = logging.getLogger(LOGGER)
         self.logger.setLevel(LOG_LEVEL)
@@ -242,6 +245,13 @@ class IrcDispatcher(asyncore.dispatcher):
             return "%s-%s" % ("irked", version.decode("utf-8"))
         except CalledProcessError:
             return "unknown"
+
+    def info(self):
+        '''Returns an iterable set of info lines.'''
+        yield "irked IRC daemon version %(version)s" % {'version' : self.gen_version()}
+        if os.path.isfile(self.info_file):
+            for line in open(self.info_file):
+                yield line.rstrip()
 
     def is_valid_oper_pass(self, username, password):
         #TODO O-line implementation

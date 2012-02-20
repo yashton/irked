@@ -461,6 +461,14 @@ class IrcClient(IrcClientMessageMixin):
                               server=server,
                               comment=comment)
 
+    def cmd_info(self, args):
+        if len(args) > 0:
+            server_name = args[0]
+            self.connection._send(irc.ERR_NOSUCHSERVER, server=server_name)
+        for info in self.server.info():
+            self.connection._send(irc.RPL_INFO, info=info)
+        self.connection._send(irc.RPL_ENDOFINFO)
+
     def cmd(self, command, args):
         try:
             cmd = getattr(self, 'cmd_%s' % command.lower())
