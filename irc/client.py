@@ -438,6 +438,36 @@ class IrcClient(IrcClientMessageMixin):
         self.connection._send(irc.RPL_INVITING, '%s %s', nickname, channel_name)
         target.connection._send(irc.RPL_INVITING, '%s %s', nickname, channel_name)
 
+    def cmd_lusers(self, args):
+        '''Implements RFC 2812 Section 3.4.2'''
+        users = len(self.server.clients)
+        services = len(self.server.services)
+        servers = len(self.server.servers) + 1
+        clients = users + services
+        unknowns = len(self.server.connections) + 1 - clients - servers
+        opers = len([i for i in self.server.clients.values() if i.modes['o']])
+        channels = len(self.server.channels)
+        self.connection._send(irc.RPL_LUSERCLIENT,
+                              ':There are %d users and %d services on %d servers',
+                              users, services, servers)
+        self.connection._send(irc.RPL_LUSERME,
+                              ':I have %d clients and %d servers',
+                              clients, servers)
+        if opers > 0:
+            self.connection._send(irc.RPL_LUSEROP,
+                                  '%d :operator(s) online', opers)
+        if unknowns > 0:
+            self.connection._send(irc.RPL_LUSERUNKNOWN,
+                                  '%d :unknown connection(s)', unknowns)
+        if channels > 0:
+            self.connection._send(irc.RPL_LUSERCHANNELS,
+                                  '%d :channels formed', channels)
+        if len(args) > 0:
+            #TODO Multi server info
+            server_name = args[0]
+            self.connection._send(irc.ERR_NOSUCHSERVER,
+                                  '%s :No such server', server_name)
+
     def cmd(self, command, args):
         try:
             cmd = getattr(self, 'cmd_%s' % command.lower())

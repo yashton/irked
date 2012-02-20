@@ -192,6 +192,7 @@ class IrcDispatcher(asyncore.dispatcher):
         self.connections = set()
         self.clients = dict()
         self.servers = dict()
+        self.services = dict()
         self.channels = dict()
         self.user_modes = dict()
         for i in irc.IRC_MODES:
