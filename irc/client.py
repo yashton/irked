@@ -14,11 +14,11 @@ class IrcClient(IrcClientMessageMixin):
 
     def cmd_user(self, args):
         if len(args) < 4:
-            self.connection._err_need_more_params('USER')
+            self.connection._send(irc.ERR_NEEDMOREPARAMS, command='USER')
             return
 
         if self.connection.registered:
-            self.connection._send(irc.ERR_ALREADYREGISTRED, ':Unauthorized command (already registered)')
+            self.connection._send(irc.ERR_ALREADYREGISTRED)
 
         user = args[0]
         mode = args[1]
@@ -28,33 +28,33 @@ class IrcClient(IrcClientMessageMixin):
         # TODO? write a nick-changing method that checks for this nick (race condition?)
         self.server.clients[self.connection.nick] = self
         self.connection.registered = True
-        self.connection._send(irc.RPL_WELCOME, 'Welcome to the Internet Relay Network %s!%s@%s',
-                              self.connection.nick,
-                              self.connection.user[0],
-                              self.connection.host)
-        self.connection._send(irc.RPL_YOURHOST, 'Your host is %s, running version %s',
-                              self.server.name,
-                              self.server.version)
-        self.connection._send(irc.RPL_CREATED, 'This server was created %s',
-                              self.server.launched)
-        self.connection._send(irc.RPL_MYINFO, '%s %s %s %s',
-                              self.server.name,
-                              self.server.version,
-                              irc.mode_str(self.server.user_modes),
-                              irc.mode_str(self.server.channel_modes))
+        self.connection._send(irc.RPL_WELCOME,
+                              nick=self.connection.nick,
+                              user=self.connection.user[0],
+                              host=self.connection.host)
+        self.connection._send(irc.RPL_YOURHOST,
+                              server=self.server.name,
+                              version=self.server.version)
+        self.connection._send(irc.RPL_CREATED,
+                              launched=self.server.launched)
+        self.connection._send(irc.RPL_MYINFO,
+                              server=self.server.name,
+                              version=self.server.version,
+                              user_modes=irc.mode_str(self.server.user_modes),
+                              channel_modes=irc.mode_str(self.server.channel_modes))
 
         self.cmd_motd(list())
 
     def cmd_motd(self, args):
         #TODO Need to fetch motd from other servers.
         if (not os.path.isfile(self.server.motd)):
-            self.connection._send(irc.ERR_NOMOTD, ":MOTD File is missing")
+            self.connection._send(irc.ERR_NOMOTD)
             return
-        self.connection._send(irc.RPL_MOTDSTART, ":- %s Message of the day - " % self.server.name)
+        self.connection._send(irc.RPL_MOTDSTART, server=self.server.name)
         motd = open(self.server.motd)
         for line in motd:
-            self.connection._send(irc.RPL_MOTD, ":- %s" % line)
-        self.connection._send(irc.RPL_ENDOFMOTD, ":End of MOTD command")
+            self.connection._send(irc.RPL_MOTD, motd_line=line)
+        self.connection._send(irc.RPL_ENDOFMOTD)
 
     def cmd_join(self, args):
         # TODO: support multiple channels at once
@@ -63,8 +63,7 @@ class IrcClient(IrcClientMessageMixin):
         channel = args[0]
 
         if len(args) == 0:
-            self.connection._send(irc.ERR_NEEDMOREPARAMS,
-                                  "JOIN :Not enough parameters")
+            self.connection._send(irc.ERR_NEEDMOREPARAMS, command='JOIN')
             return
 
         if args[0] =="0":
@@ -80,8 +79,7 @@ class IrcClient(IrcClientMessageMixin):
 
     def cmd_part(self, args):
         if len(args) == 0:
-            self.connection._send(irc.ERR_NEEDMOREPARAMS,
-                                  "PART :Not enough parameters")
+            self.connection._send(irc.ERR_NEEDMOREPARAMS, command='PART')
 
         channels = re.split(",", args[0])
 
@@ -94,8 +92,9 @@ class IrcClient(IrcClientMessageMixin):
 
     def cmd_time(self, args):
         # TODO: multi-server stuff
-        self.connection._send(irc.RPL_TIME, "%s :%s",
-                              self.server.name, time.asctime(time.localtime()))
+        self.connection._send(irc.RPL_TIME,
+                              server=self.server.name,
+                              time=time.asctime(time.localtime()))
 
     def cmd_quit(self, args):
         to_notify = set({self})
@@ -128,8 +127,7 @@ class IrcClient(IrcClientMessageMixin):
     def cmd_topic(self, args):
         self.server.logger.debug("TOPIC args: %s", args)
         if len(args) == 0:
-            self.connection._send(irc.ERR_NEEDMOREPARAMS,
-                                  "TOPIC :Not enough parameters")
+            self.connection._send(irc.ERR_NEEDMOREPARAMS, command='TOPIC')
         channel_name = args[0]
         channel = self.server.channels[channel_name]
         self.server.logger.debug("Topic request for %s: %s",
@@ -151,11 +149,10 @@ class IrcClient(IrcClientMessageMixin):
             elif channel.topic is None or channel.topic == '':
                 self.server.logger.debug("No topic for %s", channel_name)
                 self.connection._send(irc.RPL_NOTOPIC,
-                                      "%s :No topic is set",
-                                      channel_name)
+                                      channel=channel_name)
             else:
-                self.connection._send(irc.RPL_TOPIC, "%s :%s",
-                                      channel_name, channel.topic)
+                self.connection._send(irc.RPL_TOPIC,
+                                      channel=channel_name, topic=channel.topic)
 
     def cmd_list(self, args):
         # TODO: server target
@@ -168,11 +165,11 @@ class IrcClient(IrcClientMessageMixin):
             channels = self.server.channels.values()
 
         for channel in channels:
-            self.connection._send(irc.RPL_LIST, "%s %d :%s",
-                    channel.name,
-                    len(channel.clients), # need to check visibility here
-                    channel.topic or "")
-        self.connection._send(irc.RPL_LISTEND, ":End of LIST")
+            self.connection._send(irc.RPL_LIST,
+                                  channel=channel.name,
+                                  visible=len(channel.clients), # need to check visibility here
+                                  topic=channel.topic or "")
+        self.connection._send(irc.RPL_LISTEND)
 
     def cmd_kick(self, args):
         """ KICK command, rfc2812 3.2.8 """
@@ -180,8 +177,7 @@ class IrcClient(IrcClientMessageMixin):
         # TODO: channel can be a chanmask
 
         if len(args) < 2:
-            self.connection._send(irc.ERR_NEEDMOREPARAMS,
-                                  "KICK :Not enough parameters")
+            self.connection._send(irc.ERR_NEEDMOREPARAMS, command="KICK")
             return
 
         chan_list, user_list = args[0:2]
@@ -203,7 +199,7 @@ class IrcClient(IrcClientMessageMixin):
             channel = self.server.channels[channels[0]]
             if not channel:
                 self.connection._send(irc.ERR_NOSUCHCHANNEL,
-                        "%s :No such channel", channels[0])
+                                      channel=channels[0])
                 return
             for user in users:
                 channel.kick(self, user, comment)
@@ -212,12 +208,10 @@ class IrcClient(IrcClientMessageMixin):
 
     def cmd_privmsg(self, args):
         if len(args) == 0:
-            self.connection._send(irc.ERR_NORECIPIENT,
-                                  ':No recipient given (%s)',
-                                  'JOIN')
+            self.connection._send(irc.ERR_NORECIPIENT, command='JOIN')
             return
         if len(args) == 1:
-            self.connection._send(irc.ERR_NOTEXTTOSEND, ':No text to send')
+            self.connection._send(irc.ERR_NOTEXTTOSEND)
             return
 
         if len(args) != 2:
@@ -238,8 +232,7 @@ class IrcClient(IrcClientMessageMixin):
     def cmd_ping(self, args):
         # TODO: multi-server stuff
         if not len(args):
-            self.connection._send(irc.ERR_NEEDMOREPARAMS,
-                                  "PING :Not enough parameters")
+            self.connection._send(irc.ERR_NEEDMOREPARAMS, command='PING')
         target = args[0]
 
         self.connection.raw_send("%s PONG :%s\r\n" %
@@ -247,12 +240,11 @@ class IrcClient(IrcClientMessageMixin):
 
     def cmd_away(self, args):
         # not implementing this for now (it's an optional feature)
-        self.connection._send(irc.RPL_UNAWAY,
-                             ":You are no longer marked as being away")
+        self.connection._send(irc.RPL_UNAWAY)
 
     def cmd_mode(self, args):
         if not len(args) > 0:
-            self.connection._err_need_more_params('MODE')
+            self.connection._send(irc.ERR_NEEDMOREPARAMS, command='MODE')
             return
         target = args[0]
         if irc.is_channel_name(target):
@@ -262,15 +254,14 @@ class IrcClient(IrcClientMessageMixin):
 
     def cmd_user_mode(self, target, args):
         if target != self.connection.nick:
-            self.connection._send(irc.ERR_USERSDONTMATCH,
-                                  ":Cannot change mode for other users")
+            self.connection._send(irc.ERR_USERSDONTMATCH)
             return
         if len(args) == 0:
-            self.connection._send(irc.RPL_UMODEIS, irc.mode_str(self.modes))
+            self.connection._send(irc.RPL_UMODEIS, mode=irc.mode_str(self.modes))
             return
         op, flag = args[0]
         if not (flag in irc.IRC_USER_MODES and (op != '+' or op != '-')) or args[0] == '+o':
-            self.connection._send(irc.ERR_UMODEUNKNOWNFLAG, ":Unknown MODE flag")
+            self.connection._send(irc.ERR_UMODEUNKNOWNFLAG)
             return
         self.modes[flag] = op == "+"
 
@@ -278,13 +269,12 @@ class IrcClient(IrcClientMessageMixin):
         self.server.logger.debug("MODE channel %s: %s", target, args)
         channel = self.server.channels[target]
         if channel.modes is None:
-            self.connection._send(irc.ERR_NOCHANMODES,
-                                  "%s :Channel doesn't support modes", target)
+            self.connection._send(irc.ERR_NOCHANMODES, channel=target)
         #TODO Only handling single mode changes
         if len(args) == 0:
             modes = channel.modes.user_mode(self.connection.nick)
-            self.connection._send(irc.RPL_CHANNELMODEIS, "%s %s %s",
-                                  self.connection.nick, target, modes)
+            self.connection._send(irc.RPL_CHANNELMODEIS,
+                                  channel=self.connection.nick, mode=target, params=modes)
         elif len(args) == 1:
             if self not in channel.modes.operators:
                 self.helper_chan_op_privs_needed(target)
@@ -319,12 +309,10 @@ class IrcClient(IrcClientMessageMixin):
                 self.helper_invite_list(target, channel)
             elif command == 'O':
                 self.connection._send(irc.RPL_UNIQOPIS,
-                                      "%s %s",
-                                      target, channel.modes.creator.connection.nick)
+                                      channel=target, nickname=channel.modes.creator.connection.nick)
             else:
                 self.connection._send(irc.ERR_UNKNOWNMODE,
-                                      "%s :is unknown mode char to me for %s",
-                                      command, target)
+                                      mode=command, channel=target)
         elif len(args) == 2:
             if self not in channel.modes.operators:
                 self.helper_chan_op_privs_needed(target)
@@ -335,7 +323,7 @@ class IrcClient(IrcClientMessageMixin):
                     channel.modes.key = param
                 else:
                     self.connection._send(irc.ERR_KEYSET,
-                                          "%s :Channel key already set", target)
+                                          channel=target)
             elif command == '+l':
                 channel.limit = int(param)
             elif command == '+o' or command == '-o':
@@ -387,34 +375,32 @@ class IrcClient(IrcClientMessageMixin):
                     except KeyError:
                         pass
         else:
-            self.connection._err_need_more_params('MODE')
+            self.connection._send(irc.ERR_NEEDMOREPARAMS, command='MODE')
 
     def cmd_oper(self, args):
         if len(args) != 2:
-            self.connection._err_need_more_params('OPER')
+            self.connection._send(irc.ERR_NEEDMOREPARAMS, command='OPER')
             return
         username, password = args
         if not self.server.allows_oper():
-            self.connection._send(irc.ERR_NOOPERHOST,
-                                  ':No O-lines for your host')
+            self.connection._send(irc.ERR_NOOPERHOST)
             return
         if not self.server.is_valid_oper_pass(username, password):
-            self.connection._send(irc.ERR_PASSWDMISMATCH, ':Password incorrect')
+            self.connection._send(irc.ERR_PASSWDMISMATCH)
             return
         self.modes['o'] = True
-        self.connection._send(irc.RPL_YOUREOPER, ':You are now an IRC operator')
-        self.connection._send(irc.RPL_UMODEIS, irc.mode_str(self.modes))
+        self.connection._send(irc.RPL_YOUREOPER)
+        self.connection._send(irc.RPL_UMODEIS, mode=irc.mode_str(self.modes))
 
 
     def cmd_invite(self, args):
         '''Implements RCF 2812 Section 3.2.7 and RFC 1459 Section 4.2.7'''
         if len(args) != 2:
-            self.connection._err_need_more_params('INVITE')
+            self.connection._send(irc.ERR_NEEDMOREPARAMS, command='INVITE')
             return
         nickname, channel_name = args
         if nickname not in self.server.clients:
-            self.connection._send(irc.ERR_NOSUCHNICK,
-                                  '%s :No such nick/channel', nickname)
+            self.connection._send(irc.ERR_NOSUCHNICK, nickname=nickname)
             return
         target = self.server.clients[nickname]
         # (irc.RPL_AWAY, '%s :%s', nickname, away_message)
@@ -422,21 +408,18 @@ class IrcClient(IrcClientMessageMixin):
             channel = self.server.channels[channel_name]
             if self not in channel.clients:
                 self.connection._send(irc.ERR_NOTONCHANNEL,
-                                      "%s :You're not on that channel",
-                                      channel_name)
+                                      channel_name=channel_name)
                 return
             elif target in channel.clients:
                 self.connection._send(irc.ERR_USERONCHANNEL,
-                                      '%s %s :is already on channel',
-                                      nickname, channel_name)
+                                      nickname=nickname, channel=channel_name)
                 return
             elif channel.modes.invite and self not in channel.modes.operators:
                 self.connection._send(irc.ERR_CHANOPRIVSNEEDED,
-                                      "%s :You're not channel operator",
-                                      channel_name)
+                                      channel=channel_name)
                 return
-        self.connection._send(irc.RPL_INVITING, '%s %s', nickname, channel_name)
-        target.connection._send(irc.RPL_INVITING, '%s %s', nickname, channel_name)
+        self.connection._send(irc.RPL_INVITING, nickname=nickname, channel=channel_name)
+        target.connection._send(irc.RPL_INVITING, nickname=nickname, channel=channel_name)
 
     def cmd_lusers(self, args):
         '''Implements RFC 2812 Section 3.4.2'''
@@ -448,40 +431,35 @@ class IrcClient(IrcClientMessageMixin):
         opers = len([i for i in self.server.clients.values() if i.modes['o']])
         channels = len(self.server.channels)
         self.connection._send(irc.RPL_LUSERCLIENT,
-                              ':There are %d users and %d services on %d servers',
-                              users, services, servers)
+                              users=users, services=services, servers=servers)
         self.connection._send(irc.RPL_LUSERME,
-                              ':I have %d clients and %d servers',
-                              clients, servers)
+                              clients=clients, servers=(servers-1))
         if opers > 0:
-            self.connection._send(irc.RPL_LUSEROP,
-                                  '%d :operator(s) online', opers)
+            self.connection._send(irc.RPL_LUSEROP, opers=opers)
         if unknowns > 0:
-            self.connection._send(irc.RPL_LUSERUNKNOWN,
-                                  '%d :unknown connection(s)', unknowns)
+            self.connection._send(irc.RPL_LUSERUNKNOWN, unknown=unknowns)
         if channels > 0:
-            self.connection._send(irc.RPL_LUSERCHANNELS,
-                                  '%d :channels formed', channels)
+            self.connection._send(irc.RPL_LUSERCHANNELS, channels=channels)
         if len(args) > 0:
             #TODO Multi server info
             server_name = args[0]
-            self.connection._send(irc.ERR_NOSUCHSERVER,
-                                  '%s :No such server', server_name)
+            self.connection._send(irc.ERR_NOSUCHSERVER, server=server_name)
 
     def cmd_version(self, args):
         if len(args) > 0:
             #TODO Multi server info
             server_name = args[0]
-            self.connection._send(irc.ERR_NOSUCHSERVER,
-                                  '%s :No such server', server_name)
+            self.connection._send(irc.ERR_NOSUCHSERVER, server=server_name)
             return
         version = self.server.version
         comment = self.server.version_comment
         debug = self.server.logger.getEffectiveLevel()
         server = self.server.name
         self.connection._send(irc.RPL_VERSION,
-                              '%s.%d %s :%s',
-                              version, debug, server, comment)
+                              version=version,
+                              debug=debug,
+                              server=server,
+                              comment=comment)
 
     def cmd(self, command, args):
         try:

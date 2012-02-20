@@ -120,14 +120,14 @@ class IrcHandler(asyncore.dispatcher):
     def cmd_nick(self, args):
         # TODO: err irc.ERR_UNAVAILRESOURCE
         if not len(args):
-            self._send(irc.ERR_NONICKNAMEGIVEN, ':No nickname given')
+            self._send(irc.ERR_NONICKNAMEGIVEN)
             return
 
         # TODO: validate nickname (irc.ERR_ERRONEUSNICKNAME)
 
         nick = args[0]
         if nick in self.server.clients:
-            self._send(irc.ERR_NICKNAMEINUSE, '%s :Nickname is already in use' % self.nick)
+            self._send(irc.ERR_NICKNAMEINUSE, nickname=self.nick)
             return
 
         # TODO: nickname collision (irc.ERR_NICKCOLLISION) -- multiple server stuff
@@ -143,13 +143,11 @@ class IrcHandler(asyncore.dispatcher):
             del self.server.clients[old_nick]
         self.nick = nick
 
-    def _err_need_more_params(self, command):
-        self._send(irc.ERR_NEEDMOREPARAMS, '%s :Not enough parameters' % command)
-
-    def _send(self, code, message, *format_args):
+    def _send(self, code, **format_args):
+        name, message = irc.IRC_CODE[code]
         formatted_message = message % format_args
         msg = '%s %03d %s %s\n' % (self.server.prefix(), code, self.nick, formatted_message)
-        self.server.logger.debug("sent to %s: '%s'", self.nick, msg.rstrip())
+        self.server.logger.debug("sent %s to %s", name, self.nick)
         self.raw_send(msg)
 
     def raw_send(self, message):
@@ -268,9 +266,9 @@ class Channel:
 
         # TODO: proper topic sending
         if self.topic is None or self.topic == '':
-            client.connection._send(irc.RPL_NOTOPIC, '%s :No topic is set' % self.name)
+            client.connection._send(irc.RPL_NOTOPIC, channel=self.name)
         else:
-            client.connection._send(irc.RPL_TOPIC, "%s :%s", self.name, self.topic)
+            client.connection._send(irc.RPL_TOPIC, channel=self.name, topic=self.topic)
 
         self.rpl_name_reply(client)
 
@@ -283,25 +281,22 @@ class Channel:
                     self._send(client, 'PART %s' % self.name)
             self.clients.remove(client)
         else:
-            client.connection._send(irc.ERR_NOTONCHANNEL,
-                    "%s :You're not on that channel" % self.name)
+            client.connection._send(irc.ERR_NOTONCHANNEL, channel=self.name)
 
     def kick(self, kicker, kickee, reason):
         # TODO: kickee probably can be more than just a nick
 
         if kicker not in self.clients:
-            kicker.connection._send(irc.ERR_NOTONCHANNEL,
-                    "%s :You're not on that channel" % self.name)
+            kicker.connection._send(irc.ERR_NOTONCHANNEL, channel_name=self.name)
             return
 
         if kicker not in channel.modes.operators:
-            kicker.connection._send(irc.ERR_CHANOPRIVSNEEDED,
-                                  "%s :You're not channel operator", self.name)
+            kicker.connection._send(irc.ERR_CHANOPRIVSNEEDED, channel=self.name)
             return
 
         if kickee not in [c.connection.nick for c in self.clients]:
             kicker.connection_send(irc.ERR_USERNOTINCHANNEL,
-                    "%s %s :They aren't on that channel", kickee, self.name)
+                                   nickname=kickee, channel=self.name)
             return
 
         if not reason:
@@ -312,8 +307,9 @@ class Channel:
     def rpl_name_reply(self, client):
         # TODO: probably need to split the names list up in case it's too long
         names = [c.connection.nick for c in self.clients]
-        client.connection._send(irc.RPL_NAMREPLY, '= %s :%s' % (self.name, str.join(' ', names)))
-        client.connection._send(irc.RPL_ENDOFNAMES, '%s :End of NAMES list' % self.name)
+        client.connection._send(irc.RPL_NAMREPLY,
+                                channel=self.name, nick=str.join(' ', names))
+        client.connection._send(irc.RPL_ENDOFNAMES, channel=self.name)
 
     def _send(self, sender, message, notify_sender = True):
         self.server.notify_channel(self.name, sender, message, notify_sender)

@@ -164,173 +164,357 @@ ERR_UMODEUNKNOWNFLAG = 501
 ERR_USERSDONTMATCH = 502
 
 IRC_CODE = {
-1 : "RPL_WELCOME",
-2 : "RPL_YOURHOST",
-3 : "RPL_CREATED",
-4 : "RPL_MYINFO",
-5 : "RPL_BOUNCE",
-200 : "RPL_TRACELINK",
-201 : "RPL_TRACECONNECTING",
-202 : "RPL_TRACEHANDSHAKE",
-203 : "RPL_TRACEUNKNOWN",
-204 : "RPL_TRACEOPERATOR",
-205 : "RPL_TRACEUSER",
-206 : "RPL_TRACESERVER",
-207 : "RPL_TRACESERVICE",
-208 : "RPL_TRACENEWTYPE",
-209 : "RPL_TRACECLASS",
-210 : "RPL_TRACERECONNECT",
-211 : "RPL_STATSLINKINFO",
-212 : "RPL_STATSCOMMANDS",
-213 : "RPL_STATSCLINE",
-214 : "RPL_STATSNLINE",
-215 : "RPL_STATSILINE",
-216 : "RPL_STATSKLINE",
-217 : "RPL_STATSQLINE",
-218 : "RPL_STATSYLINE",
-219 : "RPL_ENDOFSTATS",
-221 : "RPL_UMODEIS",
-231 : "RPL_SERVICEINFO",
-232 : "RPL_ENDOFSERVICES",
-233 : "RPL_SERVICE",
-234 : "RPL_SERVLIST",
-235 : "RPL_SERVLISTEND",
-240 : "RPL_STATSVLINE",
-241 : "RPL_STATSLLINE",
-242 : "RPL_STATSUPTIME",
-243 : "RPL_STATSOLINE",
-244 : "RPL_STATSHLINE",
-246 : "RPL_STATSPING",
-250 : "RPL_STATSDLINE",
-251 : "RPL_LUSERCLIENT",
-252 : "RPL_LUSEROP",
-253 : "RPL_LUSERUNKNOWN",
-254 : "RPL_LUSERCHANNELS",
-255 : "RPL_LUSERME",
-256 : "RPL_ADMINME",
-257 : "RPL_ADMINLOC1",
-258 : "RPL_ADMINLOC2",
-259 : "RPL_ADMINEMAIL",
-261 : "RPL_TRACELOG",
-262 : "RPL_TRACEEND",
-263 : "RPL_TRYAGAIN",
-300 : "RPL_NONE",
-301 : "RPL_AWAY",
-302 : "RPL_USERHOST",
-303 : "RPL_ISON",
-305 : "RPL_UNAWAY",
-306 : "RPL_NOWAWAY",
-311 : "RPL_WHOISUSER",
-312 : "RPL_WHOISSERVER",
-313 : "RPL_WHOISOPERATOR",
-314 : "RPL_WHOWASUSER",
-315 : "RPL_ENDOFWHO",
-316 : "RPL_WHOISCHANOP",
-317 : "RPL_WHOISIDLE",
-318 : "RPL_ENDOFWHOIS",
-319 : "RPL_WHOISCHANNELS",
-321 : "RPL_LISTSTART",
-322 : "RPL_LIST",
-323 : "RPL_LISTEND",
-324 : "RPL_CHANNELMODEIS",
-325 : "RPL_UNIQOPIS",
-331 : "RPL_NOTOPIC",
-332 : "RPL_TOPIC",
-341 : "RPL_INVITING",
-342 : "RPL_SUMMONING",
-346 : "RPL_INVITELIST",
-347 : "RPL_ENDOFINVITELIST",
-348 : "RPL_EXCEPTLIST",
-349 : "RPL_ENDOFEXCEPTLIST",
-351 : "RPL_VERSION",
-352 : "RPL_WHOREPLY",
-353 : "RPL_NAMREPLY",
-361 : "RPL_KILLDONE",
-362 : "RPL_CLOSING",
-363 : "RPL_CLOSEEND",
-364 : "RPL_LINKS",
-365 : "RPL_ENDOFLINKS",
-366 : "RPL_ENDOFNAMES",
-367 : "RPL_BANLIST",
-368 : "RPL_ENDOFBANLIST",
-369 : "RPL_ENDOFWHOWAS",
-371 : "RPL_INFO",
-372 : "RPL_MOTD",
-373 : "RPL_INFOSTART",
-374 : "RPL_ENDOFINFO",
-375 : "RPL_MOTDSTART",
-376 : "RPL_ENDOFMOTD",
-381 : "RPL_YOUREOPER",
-382 : "RPL_REHASHING",
-383 : "RPL_YOURESERVICE",
-384 : "RPL_MYPORTIS",
-391 : "RPL_TIME",
-392 : "RPL_USERSSTART",
-393 : "RPL_USERS",
-394 : "RPL_ENDOFUSERS",
-395 : "RPL_NOUSERS",
-401 : "ERR_NOSUCHNICK",
-402 : "ERR_NOSUCHSERVER",
-403 : "ERR_NOSUCHCHANNEL",
-404 : "ERR_CANNOTSENDTOCHAN",
-405 : "ERR_TOOMANYCHANNELS",
-406 : "ERR_WASNOSUCHNICK",
-407 : "ERR_TOOMANYTARGETS",
-408 : "ERR_NOSUCHSERVICE",
-409 : "ERR_NOORIGIN",
-411 : "ERR_NORECIPIENT",
-412 : "ERR_NOTEXTTOSEND",
-413 : "ERR_NOTOPLEVEL",
-414 : "ERR_WILDTOPLEVEL",
-415 : "ERR_BADMASK",
-421 : "ERR_UNKNOWNCOMMAND",
-422 : "ERR_NOMOTD",
-423 : "ERR_NOADMININFO",
-424 : "ERR_FILEERROR",
-431 : "ERR_NONICKNAMEGIVEN",
-432 : "ERR_ERRONEUSNICKNAME",
-433 : "ERR_NICKNAMEINUSE",
-436 : "ERR_NICKCOLLISION",
-437 : "ERR_UNAVAILRESOURCE",
-441 : "ERR_USERNOTINCHANNEL",
-442 : "ERR_NOTONCHANNEL",
-443 : "ERR_USERONCHANNEL",
-444 : "ERR_NOLOGIN",
-445 : "ERR_SUMMONDISABLED",
-446 : "ERR_USERSDISABLED",
-451 : "ERR_NOTREGISTERED",
-461 : "ERR_NEEDMOREPARAMS",
-462 : "ERR_ALREADYREGISTRED",
-463 : "ERR_NOPERMFORHOST",
-464 : "ERR_PASSWDMISMATCH",
-465 : "ERR_YOUREBANNEDCREEP",
-466 : "ERR_YOUWILLBEBANNED",
-467 : "ERR_KEYSET",
-471 : "ERR_CHANNELISFULL",
-472 : "ERR_UNKNOWNMODE",
-473 : "ERR_INVITEONLYCHAN",
-474 : "ERR_BANNEDFROMCHAN",
-475 : "ERR_BADCHANNELKEY",
-476 : "ERR_BADCHANMASK",
-477 : "ERR_NOCHANMODES",
-478 : "ERR_BANLISTFULL",
-481 : "ERR_NOPRIVILEGES",
-482 : "ERR_CHANOPRIVSNEEDED",
-483 : "ERR_CANTKILLSERVER",
-484 : "ERR_RESTRICTED",
-485 : "ERR_UNIQOPPRIVSNEEDED",
-491 : "ERR_NOOPERHOST",
-492 : "ERR_NOSERVICEHOST",
-501 : "ERR_UMODEUNKNOWNFLAG",
-502 : "ERR_USERSDONTMATCH",
+    RPL_WELCOME :
+       ("RPL_WELCOME",
+        'Welcome to the Internet Relay Network %(nick)s!%(user)s@%(host)s'),
+    RPL_YOURHOST :
+       ("RPL_YOURHOST",
+        'Your host is %(server)s, running version %(version)s'),
+    RPL_CREATED :
+       ("RPL_CREATED",
+        'This server was created %(launched)s'),
+    RPL_MYINFO :
+       ("RPL_MYINFO",
+        '%(server)s %(version)s %(user_modes)s %(channel_modes)s'),
+    RPL_BOUNCE :
+       ("RPL_BOUNCE", ""),
+    RPL_TRACELINK :
+       ("RPL_TRACELINK", ""),
+    RPL_TRACECONNECTING :
+       ("RPL_TRACECONNECTING", ""),
+    RPL_TRACEHANDSHAKE :
+       ("RPL_TRACEHANDSHAKE", ""),
+    RPL_TRACEUNKNOWN :
+       ("RPL_TRACEUNKNOWN", ""),
+    RPL_TRACEOPERATOR :
+       ("RPL_TRACEOPERATOR", ""),
+    RPL_TRACEUSER :
+       ("RPL_TRACEUSER", ""),
+    RPL_TRACESERVER :
+       ("RPL_TRACESERVER", ""),
+    RPL_TRACESERVICE :
+       ("RPL_TRACESERVICE", ""),
+    RPL_TRACENEWTYPE :
+       ("RPL_TRACENEWTYPE", ""),
+    RPL_TRACECLASS :
+       ("RPL_TRACECLASS", ""),
+    RPL_TRACERECONNECT :
+       ("RPL_TRACERECONNECT", ""),
+    RPL_STATSLINKINFO :
+       ("RPL_STATSLINKINFO", ""),
+    RPL_STATSCOMMANDS :
+       ("RPL_STATSCOMMANDS", ""),
+    RPL_STATSCLINE :
+       ("RPL_STATSCLINE", ""),
+    RPL_STATSNLINE :
+       ("RPL_STATSNLINE", ""),
+    RPL_STATSILINE :
+       ("RPL_STATSILINE", ""),
+    RPL_STATSKLINE :
+       ("RPL_STATSKLINE", ""),
+    RPL_STATSQLINE :
+       ("RPL_STATSQLINE", ""),
+    RPL_STATSYLINE :
+       ("RPL_STATSYLINE", ""),
+    RPL_ENDOFSTATS :
+       ("RPL_ENDOFSTATS", ""),
+    RPL_UMODEIS :
+       ("RPL_UMODEIS", "%(mode)s"),
+    RPL_SERVICEINFO :
+       ("RPL_SERVICEINFO", ""),
+    RPL_ENDOFSERVICES :
+       ("RPL_ENDOFSERVICES", ""),
+    RPL_SERVICE :
+       ("RPL_SERVICE", ""),
+    RPL_SERVLIST :
+       ("RPL_SERVLIST", ""),
+    RPL_SERVLISTEND :
+       ("RPL_SERVLISTEND", ""),
+    RPL_STATSVLINE :
+       ("RPL_STATSVLINE", ""),
+    RPL_STATSLLINE :
+       ("RPL_STATSLLINE", ""),
+    RPL_STATSUPTIME :
+       ("RPL_STATSUPTIME", ""),
+    RPL_STATSOLINE :
+       ("RPL_STATSOLINE", ""),
+    RPL_STATSHLINE :
+       ("RPL_STATSHLINE", ""),
+    RPL_STATSPING :
+       ("RPL_STATSPING", ""),
+    RPL_STATSDLINE :
+       ("RPL_STATSDLINE", ""),
+    RPL_LUSERCLIENT :
+       ("RPL_LUSERCLIENT",
+        ':There are %(users)d users and %(services)d services on %(servers)d servers'),
+    RPL_LUSEROP :
+       ("RPL_LUSEROP", 
+        '%(opers)d :operator(s) online'),
+    RPL_LUSERUNKNOWN :
+       ("RPL_LUSERUNKNOWN",
+        '%(unknown)d :unknown connection(s)'),
+    RPL_LUSERCHANNELS :
+       ("RPL_LUSERCHANNELS", 
+        '%(channels)d :channels formed'),
+    RPL_LUSERME :
+       ("RPL_LUSERME",
+        ':I have %(clients)d clients and %(servers)d servers'),
+    RPL_ADMINME :
+       ("RPL_ADMINME", ""),
+    RPL_ADMINLOC1 :
+       ("RPL_ADMINLOC1", ""),
+    RPL_ADMINLOC2 :
+       ("RPL_ADMINLOC2", ""),
+    RPL_ADMINEMAIL :
+       ("RPL_ADMINEMAIL", ""),
+    RPL_TRACELOG :
+       ("RPL_TRACELOG", ""),
+    RPL_TRACEEND :
+       ("RPL_TRACEEND", ""),
+    RPL_TRYAGAIN :
+       ("RPL_TRYAGAIN", ""),
+    RPL_NONE :
+       ("RPL_NONE", ""),
+    RPL_AWAY :
+       ("RPL_AWAY", ""),
+    RPL_USERHOST :
+       ("RPL_USERHOST", ""),
+    RPL_ISON :
+       ("RPL_ISON", ""),
+    RPL_UNAWAY :
+       ("RPL_UNAWAY",
+        ":You are no longer marked as being away"),
+    RPL_NOWAWAY :
+       ("RPL_NOWAWAY", ""),
+    RPL_WHOISUSER :
+       ("RPL_WHOISUSER", ""),
+    RPL_WHOISSERVER :
+       ("RPL_WHOISSERVER", ""),
+    RPL_WHOISOPERATOR :
+       ("RPL_WHOISOPERATOR", ""),
+    RPL_WHOWASUSER :
+       ("RPL_WHOWASUSER", ""),
+    RPL_ENDOFWHO :
+       ("RPL_ENDOFWHO", ""),
+    RPL_WHOISCHANOP :
+       ("RPL_WHOISCHANOP", ""),
+    RPL_WHOISIDLE :
+       ("RPL_WHOISIDLE", ""),
+    RPL_ENDOFWHOIS :
+       ("RPL_ENDOFWHOIS", ""),
+    RPL_WHOISCHANNELS :
+       ("RPL_WHOISCHANNELS", ""),
+    RPL_LISTSTART :
+       ("RPL_LISTSTART", ""),
+    RPL_LIST :
+       ("RPL_LIST", "%(channel)s %(visible)d :%(topic)s"),
+    RPL_LISTEND :
+       ("RPL_LISTEND", ":End of LIST"),
+    RPL_CHANNELMODEIS :
+       ("RPL_CHANNELMODEIS", "%(channel)s %(mode)s %(params)s"),
+    RPL_UNIQOPIS :
+       ("RPL_UNIQOPIS", "%(channel)s %(nickname)s"),
+    RPL_NOTOPIC :
+       ("RPL_NOTOPIC",
+        "%(channel)s :No topic is set"),
+    RPL_TOPIC :
+       ("RPL_TOPIC", "%(channel)s :%(topic)s"),
+    RPL_INVITING :
+       ("RPL_INVITING", '%(nickname)s %(channel)s'),
+    RPL_SUMMONING :
+       ("RPL_SUMMONING", ""),
+    RPL_INVITELIST :
+       ("RPL_INVITELIST", "%(channel)s %(mask)s"),
+    RPL_ENDOFINVITELIST :
+       ("RPL_ENDOFINVITELIST", 
+        "%s :End of channel invite list"),
+    RPL_EXCEPTLIST :
+       ("RPL_EXCEPTLIST", "%(channel)s %(mask)s"),
+    RPL_ENDOFEXCEPTLIST :
+       ("RPL_ENDOFEXCEPTLIST",
+        "%(channel)s :End of channel exception list"),
+    RPL_VERSION :
+       ("RPL_VERSION",
+        '%(version)s.%(debug)d %(server)s :%(comment)s'),
+    RPL_WHOREPLY :
+       ("RPL_WHOREPLY", ""),
+    RPL_NAMREPLY :
+       ("RPL_NAMREPLY", '= %(channel)s :%(nick)s'),
+    RPL_KILLDONE :
+       ("RPL_KILLDONE", ""),
+    RPL_CLOSING :
+       ("RPL_CLOSING", ""),
+    RPL_CLOSEEND :
+       ("RPL_CLOSEEND", ""),
+    RPL_LINKS :
+       ("RPL_LINKS", ""),
+    RPL_ENDOFLINKS :
+       ("RPL_ENDOFLINKS", ""),
+    RPL_ENDOFNAMES :
+       ("RPL_ENDOFNAMES", '%(channel)s :End of NAMES list'),
+    RPL_BANLIST :
+       ("RPL_BANLIST", "%(channel)s %(mask)s"),
+    RPL_ENDOFBANLIST :
+       ("RPL_ENDOFBANLIST", "%(channel)s :End of channel ban list"),
+    RPL_ENDOFWHOWAS :
+       ("RPL_ENDOFWHOWAS", ""),
+    RPL_INFO :
+       ("RPL_INFO", ':%(info)s'),
+    RPL_MOTD :
+       ("RPL_MOTD", ":- %(motd_line)s"),
+    RPL_INFOSTART :
+       ("RPL_INFOSTART", ""),
+    RPL_ENDOFINFO :
+       ("RPL_ENDOFINFO", ':End of INFO list'),
+    RPL_MOTDSTART :
+       ("RPL_MOTDSTART", ":- %(server)s Message of the day - "),
+    RPL_ENDOFMOTD :
+       ("RPL_ENDOFMOTD", ":End of MOTD command"),
+    RPL_YOUREOPER :
+       ("RPL_YOUREOPER", ':You are now an IRC operator'),
+    RPL_REHASHING :
+       ("RPL_REHASHING", ""),
+    RPL_YOURESERVICE :
+       ("RPL_YOURESERVICE", ""),
+    RPL_MYPORTIS :
+       ("RPL_MYPORTIS", ""),
+    RPL_TIME :
+       ("RPL_TIME", "%(server)s :%(time)s"),
+    RPL_USERSSTART :
+       ("RPL_USERSSTART", ""),
+    RPL_USERS :
+       ("RPL_USERS", ""),
+    RPL_ENDOFUSERS :
+       ("RPL_ENDOFUSERS", ""),
+    RPL_NOUSERS :
+       ("RPL_NOUSERS", ""),
+    ERR_NOSUCHNICK :
+       ("ERR_NOSUCHNICK", 
+        '%(nickname)s :No such nick/channel'),
+    ERR_NOSUCHSERVER :
+       ("ERR_NOSUCHSERVER", '%(server)s :No such server'),
+    ERR_NOSUCHCHANNEL :
+       ("ERR_NOSUCHCHANNEL", "%(channel)s :No such channel"),
+    ERR_CANNOTSENDTOCHAN :
+       ("ERR_CANNOTSENDTOCHAN", ""),
+    ERR_TOOMANYCHANNELS :
+       ("ERR_TOOMANYCHANNELS", ""),
+    ERR_WASNOSUCHNICK :
+       ("ERR_WASNOSUCHNICK", ""),
+    ERR_TOOMANYTARGETS :
+       ("ERR_TOOMANYTARGETS", ""),
+    ERR_NOSUCHSERVICE :
+       ("ERR_NOSUCHSERVICE", ""),
+    ERR_NOORIGIN :
+       ("ERR_NOORIGIN", ""),
+    ERR_NORECIPIENT :
+       ("ERR_NORECIPIENT",
+        ':No recipient given (%(command)s)'),
+    ERR_NOTEXTTOSEND :
+       ("ERR_NOTEXTTOSEND", ':No text to send'),
+    ERR_NOTOPLEVEL :
+       ("ERR_NOTOPLEVEL", ""),
+    ERR_WILDTOPLEVEL :
+       ("ERR_WILDTOPLEVEL", ""),
+    ERR_BADMASK :
+       ("ERR_BADMASK", ""),
+    ERR_UNKNOWNCOMMAND :
+       ("ERR_UNKNOWNCOMMAND", ""),
+    ERR_NOMOTD :
+       ("ERR_NOMOTD", ":MOTD File is missing"),
+    ERR_NOADMININFO :
+       ("ERR_NOADMININFO", ""),
+    ERR_FILEERROR :
+       ("ERR_FILEERROR", ""),
+    ERR_NONICKNAMEGIVEN :
+       ("ERR_NONICKNAMEGIVEN", ':No nickname given'),
+    ERR_ERRONEUSNICKNAME :
+       ("ERR_ERRONEUSNICKNAME", ""),
+    ERR_NICKNAMEINUSE :
+       ("ERR_NICKNAMEINUSE", '%(nickname)s :Nickname is already in use'),
+    ERR_NICKCOLLISION :
+       ("ERR_NICKCOLLISION", ""),
+    ERR_UNAVAILRESOURCE :
+       ("ERR_UNAVAILRESOURCE", ""),
+    ERR_USERNOTINCHANNEL :
+       ("ERR_USERNOTINCHANNEL",
+        "%(nickname)s %(channel)s :They aren't on that channel"),
+    ERR_NOTONCHANNEL :
+       ("ERR_NOTONCHANNEL",
+        "%{channel_name}s :You're not on that channel"),
+    ERR_USERONCHANNEL :
+       ("ERR_USERONCHANNEL",
+        '%(nickname)s %(channel)s :is already on channel'),
+    ERR_NOLOGIN :
+       ("ERR_NOLOGIN", ""),
+    ERR_SUMMONDISABLED :
+       ("ERR_SUMMONDISABLED", ""),
+    ERR_USERSDISABLED :
+       ("ERR_USERSDISABLED", ""),
+    ERR_NOTREGISTERED :
+       ("ERR_NOTREGISTERED", ""),
+    ERR_NEEDMOREPARAMS :
+       ("ERR_NEEDMOREPARAMS", 
+        "%(command)s :Not enough parameters"),
+    ERR_ALREADYREGISTRED :
+       ("ERR_ALREADYREGISTRED",
+        ':Unauthorized command (already registered)'),
+    ERR_NOPERMFORHOST :
+       ("ERR_NOPERMFORHOST", ""),
+    ERR_PASSWDMISMATCH :
+       ("ERR_PASSWDMISMATCH", ':Password incorrect'),
+    ERR_YOUREBANNEDCREEP :
+       ("ERR_YOUREBANNEDCREEP", ""),
+    ERR_YOUWILLBEBANNED :
+       ("ERR_YOUWILLBEBANNED", ""),
+    ERR_KEYSET :
+       ("ERR_KEYSET", "%(channel)s :Channel key already set"),
+    ERR_CHANNELISFULL :
+       ("ERR_CHANNELISFULL", ""),
+    ERR_UNKNOWNMODE :
+       ("ERR_UNKNOWNMODE",
+        "%(mode)s :is unknown mode char to me for %(channel)s"),
+    ERR_INVITEONLYCHAN :
+       ("ERR_INVITEONLYCHAN", ""),
+    ERR_BANNEDFROMCHAN :
+       ("ERR_BANNEDFROMCHAN", ""),
+    ERR_BADCHANNELKEY :
+       ("ERR_BADCHANNELKEY", ""),
+    ERR_BADCHANMASK :
+       ("ERR_BADCHANMASK", ""),
+    ERR_NOCHANMODES :
+       ("ERR_NOCHANMODES",
+        "%(channel)s :Channel doesn't support modes"),
+    ERR_BANLISTFULL :
+       ("ERR_BANLISTFULL", ""),
+    ERR_NOPRIVILEGES :
+       ("ERR_NOPRIVILEGES", ""),
+    ERR_CHANOPRIVSNEEDED :
+       ("ERR_CHANOPRIVSNEEDED",
+        "%(channel)s :You're not channel operator"),
+    ERR_CANTKILLSERVER :
+       ("ERR_CANTKILLSERVER", ""),
+    ERR_RESTRICTED :
+       ("ERR_RESTRICTED", ""),
+    ERR_UNIQOPPRIVSNEEDED :
+       ("ERR_UNIQOPPRIVSNEEDED", ""),
+    ERR_NOOPERHOST :
+       ("ERR_NOOPERHOST", ':No O-lines for your host'),
+    ERR_NOSERVICEHOST :
+       ("ERR_NOSERVICEHOST", ""),
+    ERR_UMODEUNKNOWNFLAG :
+       ("ERR_UMODEUNKNOWNFLAG", ":Unknown MODE flag"),
+    ERR_USERSDONTMATCH :
+       ("ERR_USERSDONTMATCH",
+        ":Cannot change mode for other users"),
 }
 
 CHANNEL_PREFIX = ['&', '#', '+', '!']
 
 def is_channel_name(name):
-   return len(name[1:]) < 200 and name[0] in CHANNEL_PREFIX
+    return len(name[1:]) < 200 and name[0] in CHANNEL_PREFIX
 
 def mode_str(modes):
-   '''Return a  concatenated string of active mode flags.
-   Input is a dictionary of single char flag IDs to boolean.'''
-   return ''.join([mode for mode, enabled in modes.items() if enabled])
+    '''Return a  concatenated string of active mode flags.
+    Input is a dictionary of single char flag IDs to boolean.'''
+    return ''.join([mode for mode, enabled in modes.items() if enabled])
