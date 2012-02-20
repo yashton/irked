@@ -8,6 +8,9 @@ import irc
 import time
 import subprocess
 import os.path
+import sys
+import argparse
+import configparser
 from irc.client import IrcClient, IrcServer
 
 MOTD_FILE = "motd"
@@ -169,7 +172,9 @@ class IrcHandler(asyncore.dispatcher):
 
 class IrcDispatcher(asyncore.dispatcher):
 
-    def __init__(self, host, port, name = ''):
+    def __init__(self, host, port, name = '', config = 'irked.config'):
+        self.parse_config(config)
+
         self.motd = MOTD_FILE
         self.info_file = INFO_FILE
 
@@ -205,6 +210,9 @@ class IrcDispatcher(asyncore.dispatcher):
         self.version = self.gen_version()
         self.version_comment = 'Development'
         self.launched = time.strftime("%c %Z")
+
+    def parse_config(self, config):
+        pass
 
     def channel_add(self, channel, owner):
         self.channels[channel] = Channel(channel, self)
@@ -352,5 +360,17 @@ class ChannelMode:
         return "+ns"
 
 if __name__ == '__main__':        
-    server = IrcDispatcher('', 6667)
+    parser = argparse.ArgumentParser(description='irked IRC daemon.')
+    parser.add_argument('-s', '--server',
+                        nargs='?', default='',
+                        help='Server host bind address.')
+    parser.add_argument('-p', '--port',
+                        type=int, nargs='?', default=6667,
+                        help='Server port. (default: %(default)s)')
+    parser.add_argument('-c', '--config',
+                        nargs='?', default='irked.conf',
+                        help='Configuration file. (default: %(default)s)')
+    args = parser.parse_args()
+
+    server = IrcDispatcher(args.server, args.port, config=args.config)
     asyncore.loop()
