@@ -292,7 +292,7 @@ class Channel:
                     "%s :You're not on that channel" % self.name)
             return
 
-        if kicker not in channel.modes.operators:
+        if kicker not in self.modes.operators:
             kicker.connection._send(irc.ERR_CHANOPRIVSNEEDED,
                                   "%s :You're not channel operator", self.name)
             return
