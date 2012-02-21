@@ -22,7 +22,7 @@ class IrcClient(IrcClientMessageMixin):
         self.connection._send(irc.RPL_MOTDSTART, server=self.server.name)
         motd = open(self.server.motd)
         for line in motd:
-            self.connection._send(irc.RPL_MOTD, motd_line=line)
+            self.connection._send(irc.RPL_MOTD, motd_line=line.rstrip())
         self.connection._send(irc.RPL_ENDOFMOTD)
 
     def cmd_join(self, args):
