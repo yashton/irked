@@ -243,7 +243,7 @@ class IrcClient(IrcClientMessageMixin):
         if len(args) == 0:
             modes = channel.modes.user_mode(self.connection.nick)
             self.connection._send(irc.RPL_CHANNELMODEIS,
-                                  channel=self.connection.nick, mode=target, params=modes)
+                                  channel=target, mode=self.connection.nick, params=modes)
         elif len(args) == 1:
             if self not in channel.modes.operators:
                 self.helper_chan_op_privs_needed(target)
