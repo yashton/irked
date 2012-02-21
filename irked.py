@@ -149,10 +149,6 @@ class IrcHandler(asyncore.dispatcher):
         if self.has_user and not self.registered:
             self.register()
 
-    # FIXME-FIXME-TODO-FIXME
-    # you need to make a state-machine kind of thing to determine when a user
-    # is registered (don't register upon receiving the user command, register
-    # when both the nick and user message have been recieved and are valid)
     def cmd_user(self, args):
         if len(args) < 4:
             self._err_need_more_params('USER')
