@@ -295,7 +295,7 @@ IRC_CODE = {
     RPL_WHOWASUSER :
        ("RPL_WHOWASUSER", ""),
     RPL_ENDOFWHO :
-       ("RPL_ENDOFWHO", ""),
+       ("RPL_ENDOFWHO", ":End of WHO list"),
     RPL_WHOISCHANOP :
        ("RPL_WHOISCHANOP", ""),
     RPL_WHOISIDLE :
@@ -337,7 +337,9 @@ IRC_CODE = {
        ("RPL_VERSION",
         '%(version)s.%(debug)d %(server)s :%(comment)s'),
     RPL_WHOREPLY :
-       ("RPL_WHOREPLY", ""),
+       ("RPL_WHOREPLY",
+        "%(channel)s %(user)s %(host)s %(server)s %(nick)s "\
+            "%(foo1)s %(foo2)s :%(hopcount)d %(realname)s"),
     RPL_NAMREPLY :
        ("RPL_NAMREPLY", '= %(channel)s :%(nick)s'),
     RPL_KILLDONE :

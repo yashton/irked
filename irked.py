@@ -218,6 +218,9 @@ class IrcHandler(asyncore.dispatcher):
     def writeable(self):
         return (len(self.out_buffer) > 0)
 
+    def _host(self):
+        return self.getsockname()[0]
+
     def __repr__(self):
         return "<IrcClient: nick=" + repr(self.nick) + " registered=" + repr(self.registered) + " user=" + repr(self.user) + ">"
 
@@ -410,6 +413,14 @@ class Channel:
         client.connection._send(irc.RPL_NAMREPLY,
                                 channel=self.name, nick=str.join(' ', names))
         client.connection._send(irc.RPL_ENDOFNAMES, channel=self.name)
+
+    def rpl_who(self, client):
+        for c in self.clients:
+            client.connection._send(irc.RPL_WHOREPLY,
+                    channel=self.name, user=c.connection.user[0],
+                    host=c.connection._host(), server=self.server.name,
+                    nick=c.connection.nick, foo1="*", foo2="", hopcount=0,
+                    realname=c.connection.user[2])
 
     def _send(self, sender, message, notify_sender = True):
         self.server.notify_channel(self.name, sender, message, notify_sender)

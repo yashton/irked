@@ -202,10 +202,28 @@ class IrcClient(IrcClientMessageMixin):
         # TODO: multi-server stuff
         if not len(args):
             self.connection._send(irc.ERR_NEEDMOREPARAMS, command='PING')
+            return
         target = args[0]
 
         self.connection.raw_send("%s PONG :%s\r\n" %
                                  (self.server.prefix(), target))
+
+    def cmd_who(self, args):
+        # TODO: who can take a mask, but we're just supporting channels for now
+        # (pidgin needs this to join a channel)
+        if not len(args):
+            self.connection._send(irc.ERR_NEEDMOREPARAMS, command='WHO')
+            return
+
+        channel = args[0] # TODO
+        ops_only = False  # TODO
+        if len(args) > 1 and args[1] == "o":
+            ops_only = True
+
+        # TODO: respect modes (like +i)
+        if channel in self.server.channels:
+            self.server.channels[channel].rpl_who(self)
+        self.connection._send(irc.RPL_ENDOFWHO)
 
     def cmd_away(self, args):
         # not implementing this for now (it's an optional feature)
@@ -451,8 +469,7 @@ class IrcClient(IrcClientMessageMixin):
     def prefix(self):
         nick = self.connection.nick
         username = self.connection.user[0]
-        host = self.connection.getsockname()[0]
-        return ":%s!%s@%s" % (nick, username, host)
+        return ":%s!%s@%s" % (nick, username, self.connection._host())
 
 class IrcServer:
     def cmd_server(self, args):
