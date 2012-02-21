@@ -15,12 +15,17 @@ from irc.client import IrcClient, IrcServer
 
 MOTD_FILE = "motd"
 INFO_FILE = "info"
+CONFIG_FILE = 'irked.conf'
 
 LOG_FILE = "irked.log"
 LOG_FORMAT = "%(asctime)s %(filename)s:" + \
     "%(lineno)d in %(funcName)s %(levelname)s: %(message)s"
 LOG_LEVEL = logging.DEBUG
 LOGGER = "irked"
+
+DEFAULT_HOST = ''
+DEFAULT_PORT = 6667
+DEFAULT_NAME = 'irked.server'
 
 class IrcHandler(asyncore.dispatcher):
 
@@ -172,28 +177,17 @@ class IrcHandler(asyncore.dispatcher):
 
 class IrcDispatcher(asyncore.dispatcher):
 
-    def __init__(self, host, port, name = '', config = 'irked.config'):
-        self.parse_config(config)
-
-        self.motd = MOTD_FILE
-        self.info_file = INFO_FILE
-
-        self.logger = logging.getLogger(LOGGER)
-        self.logger.setLevel(LOG_LEVEL)
-        file_handler = logging.FileHandler(LOG_FILE)
-        formatter = logging.Formatter(LOG_FORMAT)
-        file_handler.setFormatter(formatter)
-        self.logger.addHandler(file_handler)
+    def __init__(self, host=None, port=None, name=None, config=CONFIG_FILE):
+        self.config_file = config
+        self.init_logger()
+        self.parse_config(host, port, name)
 
         asyncore.dispatcher.__init__(self)
         self.create_socket(_socket.AF_INET, _socket.SOCK_STREAM)
         self.set_reuse_addr()
-        self.bind((host, port))
+        self.bind(self.address)
         self.listen(5)
-        self.logger.info('Listening on port %s', port)
-
-        if len(name) == 0:
-            self.name = 'irked.server' # config option
+        self.logger.info('Bound to "%s", listening on port %d' % self.address)
 
         self.connections = set()
         self.clients = dict()
@@ -210,9 +204,51 @@ class IrcDispatcher(asyncore.dispatcher):
         self.version = self.gen_version()
         self.version_comment = 'Development'
         self.launched = time.strftime("%c %Z")
+        self.logger.info('Server %s running irked version %s launched on %s',
+                         self.name,
+                         self.version,
+                         self.launched)
 
-    def parse_config(self, config):
-        pass
+    def parse_config(self, host, port, name):
+        config = configparser.ConfigParser()
+        config.read(self.config_file)
+
+        if host is None:
+            host = config.get('server', 'host', fallback=DEFAULT_HOST)
+        if port is None:
+            port = config.getint('server', 'port', fallback=DEFAULT_PORT)
+        self.address = (host, port)
+
+        if name is None:
+            name = config.get('server', 'name', fallback=DEFAULT_NAME)
+        self.name = name
+
+        self.motd = config.get('server', 'motd_file', fallback=MOTD_FILE)
+        self.info_file = config.get('server', 'info_file', fallback=INFO_FILE)
+
+    def init_logger(self):
+        config = configparser.ConfigParser()
+        config.read(self.config_file)
+        log_file = config.get("log", "log_file", fallback=LOG_FILE)
+        log_level_string = config.get("log", "log_level", fallback=None)
+        if log_level_string is not None:
+            try:
+                log_level = logging.__dict__[log_level_string]
+            except KeyError:
+                log_level = LOG_LEVEL
+        else:
+            log_level = LOG_LEVEL
+
+        self.logger = logging.getLogger(LOGGER)
+        self.logger.setLevel(log_level)
+        file_handler = logging.FileHandler(log_file)
+        formatter = logging.Formatter(LOG_FORMAT)
+        file_handler.setFormatter(formatter)
+        self.logger.addHandler(file_handler)
+        self.logger.info("Initialized logger %s at level %d to file %s.",
+                         LOGGER,
+                         log_level,
+                         log_file)
 
     def channel_add(self, channel, owner):
         self.channels[channel] = Channel(channel, self)
@@ -359,18 +395,25 @@ class ChannelMode:
         #TODO return real values
         return "+ns"
 
-if __name__ == '__main__':        
-    parser = argparse.ArgumentParser(description='irked IRC daemon.')
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='irked IRC daemon.',
+                                     epilog='Command line options have priority over config file values.')
     parser.add_argument('-s', '--server',
-                        nargs='?', default='',
+                        nargs='?', default=None,
                         help='Server host bind address.')
     parser.add_argument('-p', '--port',
-                        type=int, nargs='?', default=6667,
-                        help='Server port. (default: %(default)s)')
+                        type=int, nargs='?', default=None,
+                        help='Server port. Defaults to %d.' % DEFAULT_PORT)
+    parser.add_argument('-n', '--name',
+                        nargs='?', default=None,
+                        help='Server name.')
     parser.add_argument('-c', '--config',
-                        nargs='?', default='irked.conf',
+                        nargs='?', default=CONFIG_FILE,
                         help='Configuration file. (default: %(default)s)')
     args = parser.parse_args()
 
-    server = IrcDispatcher(args.server, args.port, config=args.config)
+    server = IrcDispatcher(host=args.server,
+                           port=args.port,
+                           name=args.name,
+                           config=args.config)
     asyncore.loop()
