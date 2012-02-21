@@ -183,12 +183,9 @@ class IrcClient(IrcClientMessageMixin):
             self.connection._send(irc.ERR_NOTEXTTOSEND)
             return
 
-        if len(args) != 2:
-            # fail silently?
-            pass
+        target, text = args[0:2]
 
-        target, text = args
-
+        # TODO: need to check channel modes to see if sending is allowed
         if re.match('#', target):
             self.server.notify_channel(target,
                     sender = self,
