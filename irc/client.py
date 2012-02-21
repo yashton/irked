@@ -12,37 +12,6 @@ class IrcClient(IrcClientMessageMixin):
         for i in irc.IRC_MODES:
             self.modes[i] = False
 
-    def cmd_user(self, args):
-        if len(args) < 4:
-            self.connection._send(irc.ERR_NEEDMOREPARAMS, command='USER')
-            return
-
-        if self.connection.registered:
-            self.connection._send(irc.ERR_ALREADYREGISTRED)
-
-        user = args[0]
-        mode = args[1]
-        realname = args[3]
-        self.connection.user = user, mode, realname
-
-        # TODO? write a nick-changing method that checks for this nick (race condition?)
-        self.server.clients[self.connection.nick] = self
-        self.connection.registered = True
-        self.connection._send(irc.RPL_WELCOME,
-                              nick=self.connection.nick,
-                              user=self.connection.user[0],
-                              host=self.connection.host)
-        self.connection._send(irc.RPL_YOURHOST,
-                              server=self.server.name,
-                              version=self.server.version)
-        self.connection._send(irc.RPL_CREATED,
-                              launched=self.server.launched)
-        self.connection._send(irc.RPL_MYINFO,
-                              server=self.server.name,
-                              version=self.server.version,
-                              user_modes=irc.mode_str(self.server.user_modes),
-                              channel_modes=irc.mode_str(self.server.channel_modes))
-
         self.cmd_motd(list())
 
     def cmd_motd(self, args):

@@ -40,6 +40,8 @@ class IrcHandler(asyncore.dispatcher):
         self.handler = None
         self.nick = None
         self.user = None
+        self.has_nick = False
+        self.has_user = False
         # TODO verify: need to get hostname, not IP address.
         self.host = "%s:%d" % socket.getpeername()
         self.registered = False
@@ -114,8 +116,7 @@ class IrcHandler(asyncore.dispatcher):
         elif command == 'NICK':
             self.cmd_nick(args)
         elif command == 'USER':
-            self.handler = IrcClient(self, self.server)
-            self.handler.cmd_user(args)
+            self.cmd_user(args)
         elif command == 'SERVER':
             self.handler = IrcServer(self, self.server)
             self.handler.cmd_server(args)
@@ -137,7 +138,7 @@ class IrcHandler(asyncore.dispatcher):
 
         nick = args[0]
         if nick in self.server.clients:
-            self._send(irc.ERR_NICKNAMEINUSE, nickname=self.nick)
+            self._send(irc.ERR_NICKNAMEINUSE, nickname=nick)
             return
 
         # TODO: nickname collision (irc.ERR_NICKCOLLISION) -- multiple server stuff
@@ -151,12 +152,57 @@ class IrcHandler(asyncore.dispatcher):
             # TODO: nick delay mechanism
             self.server.clients[nick] = self.handler
             del self.server.clients[old_nick]
+
         self.nick = nick
+        self.has_nick = True
+
+        if self.has_user and not self.registered:
+            self.register()
+
+    def cmd_user(self, args):
+        if len(args) < 4:
+            self._send(irc.ERR_NEEDMOREPARAMS, command='USER')
+            return
+
+        if self.registered:
+            self._send(irc.ERR_ALREADYREGISTRED)
+
+        user = args[0]
+        mode = args[1]
+        realname = args[3]
+        self.user = user, mode, realname
+
+        self.has_user = True
+        if self.has_nick:
+            self.register()
+
+    def register(self):
+        # TODO? write a nick-changing method that checks for this nick (race condition?)
+        self.server.clients[self.nick] = self
+        self.registered = True
+        self._send(irc.RPL_WELCOME,
+                   nick=self.nick,
+                   user=self.user[0],
+                   host=self.host)
+        self._send(irc.RPL_YOURHOST,
+                   server=self.server.name,
+                   version=self.server.version)
+        self._send(irc.RPL_CREATED,
+                   launched=self.server.launched)
+        self._send(irc.RPL_MYINFO,
+                   server=self.server.name,
+                   version=self.server.version,
+                   user_modes=irc.mode_str(self.server.user_modes),
+                   channel_modes=irc.mode_str(self.server.channel_modes))
+        self.handler = IrcClient(self, self.server)
+
+    def _err_need_more_params(self, command):
+        self._send(irc.ERR_NEEDMOREPARAMS, '%s :Not enough parameters' % command)
 
     def _send(self, code, **format_args):
         name, message = irc.IRC_CODE[code]
         formatted_message = message % format_args
-        msg = '%s %03d %s %s\n' % (self.server.prefix(), code, self.nick, formatted_message)
+        msg = '%s %03d %s %s\n' % (self.server.prefix(), code, self.nick or "*", formatted_message)
         self.server.logger.debug("sent %s to %s", name, self.nick)
         self.raw_send(msg)
 
@@ -344,7 +390,7 @@ class Channel:
             kicker.connection._send(irc.ERR_NOTONCHANNEL, channel_name=self.name)
             return
 
-        if kicker not in channel.modes.operators:
+        if kicker not in self.modes.operators:
             kicker.connection._send(irc.ERR_CHANOPRIVSNEEDED, channel=self.name)
             return
 
