@@ -98,30 +98,19 @@ class IrcClient(IrcClientMessageMixin):
         if len(args) == 0:
             self.connection._send(irc.ERR_NEEDMOREPARAMS, command='TOPIC')
         channel_name = args[0]
+
+        if channel_name not in self.server.channels:
+            self.connection._send(irc.ERR_NOSUCHCHANNEL, channel=channel_name)
+            return
+
         channel = self.server.channels[channel_name]
         self.server.logger.debug("Topic request for %s: %s",
                                  channel_name, channel.topic)
+
         if len(args) > 1:
-            topic = args[1]
-            self.server.logger.debug("Setting topic for %s: %s",
-                                     channel_name, topic)
-            # TODO permissions
-            # ERR_CHANOPRIVSNEEDED            ERR_NOCHANMODES
-            if self not in channel.clients:
-                self.helper_not_in_channel(channel_name)
-            else:
-                channel.topic = topic
+            channel.set_topic(self, args[1])
         else:
-            # No topic parameter indicates a request for topic
-            if self not in channel.clients:
-                self.helper_not_in_channel(channel_name)
-            elif channel.topic is None or channel.topic == '':
-                self.server.logger.debug("No topic for %s", channel_name)
-                self.connection._send(irc.RPL_NOTOPIC,
-                                      channel=channel_name)
-            else:
-                self.connection._send(irc.RPL_TOPIC,
-                                      channel=channel_name, topic=channel.topic)
+            channel.rpl_topic(self)
 
     def cmd_list(self, args):
         # TODO: server target

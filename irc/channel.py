@@ -54,6 +54,32 @@ class Channel:
 
         self._send(kicker, "KICK %s %s :%s" % (self.name, kickee, reason))
 
+    def set_topic(self, client, topic):
+        # TODO permissions
+        # ERR_CHANOPRIVSNEEDED            ERR_NOCHANMODES
+        if client not in self.clients:
+            client.helper_not_in_channel(channel_name)
+            return
+
+        self.server.logger.debug("Setting topic for %s: %s",
+                self.name, topic)
+
+        if topic == "":
+            self.topic = None
+        else:
+            self.topic = topic
+
+        self._send(client, "TOPIC %s :%s" % (self.name, self.topic or ""))
+
+    def rpl_topic(self, client):
+        # TODO: check that client is allowed to see the topic
+        if self.topic:
+            client.connection._send(irc.RPL_TOPIC,
+                    channel=self.name, topic=self.topic)
+        else:
+            self.connection._send(irc.RPL_NOTOPIC,
+                    channel=channel_name)
+
     def rpl_name_reply(self, client):
         # TODO: probably need to split the names list up in case it's too long
         names = [c.connection.nick for c in self.clients]

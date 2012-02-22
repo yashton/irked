@@ -99,7 +99,7 @@ class IrcHandler(asyncore.dispatcher):
             message = message[:match.start()]
 
         params  = message.split()
-        if trailing:
+        if trailing != None:
             params.append(trailing)
 
         command = params[0].upper()
