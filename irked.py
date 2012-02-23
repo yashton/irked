@@ -179,7 +179,6 @@ class IrcHandler(asyncore.dispatcher):
 
     def register(self):
         # TODO? write a nick-changing method that checks for this nick (race condition?)
-        self.server.clients[self.nick] = self
         self.registered = True
         self._send(irc.RPL_WELCOME,
                    nick=self.nick,
@@ -196,6 +195,7 @@ class IrcHandler(asyncore.dispatcher):
                    user_modes=irc.mode_str(self.server.user_modes),
                    channel_modes=irc.mode_str(self.server.channel_modes))
         self.handler = IrcClient(self, self.server)
+        self.server.clients[self.nick] = self.handler
 
     def _err_need_more_params(self, command):
         self._send(irc.ERR_NEEDMOREPARAMS, '%s :Not enough parameters' % command)
