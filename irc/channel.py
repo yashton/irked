@@ -14,10 +14,7 @@ class Channel:
         self.clients.add(client)
         self._send(client, 'JOIN %s' % self.name)
 
-        # TODO: proper topic sending
-        if self.topic is None or self.topic == '':
-            client.connection._send(irc.RPL_NOTOPIC, channel=self.name)
-        else:
+        if self.topic:
             client.connection._send(irc.RPL_TOPIC, channel=self.name, topic=self.topic)
 
         self.rpl_name_reply(client)
