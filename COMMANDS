@@ -5,7 +5,7 @@
 - Password
 * Nick
 - User
-! Oper
+- Oper
 - User mode
 * Quit
 Squit
@@ -15,23 +15,22 @@ Squit
 * Topic
 - Names
 - List
-! Invite
+- Invite
 - Kick
-! Private
 Notice
 * Motd
---> ! Lusers
+* Lusers
 * Version
 Stats (Plugin)
 - Time
---> ! Info
-Who
+* Info
+- Who
 ! Whois
 Whowas
-! Kill
+- Kill
 - Ping
 Pong
-Error
+? Error
 
 Multi-server
 Service
