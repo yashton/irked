@@ -78,8 +78,15 @@ class Channel:
                     channel=channel_name)
 
     def rpl_name_reply(self, client):
-        # TODO: probably need to split the names list up in case it's too long
         names = [c.connection.nick for c in self.clients]
+        names = []
+        for c in self.clients:
+            prefix = ''
+            if c in self.modes.operators:
+                prefix = '@'
+            names.append(prefix + c.connection.nick)
+
+        # TODO: need to split the names list up in case it's too long
         client.connection._send(irc.RPL_NAMREPLY,
                                 channel=self.name, nick=str.join(' ', names))
         client.connection._send(irc.RPL_ENDOFNAMES, channel=self.name)
