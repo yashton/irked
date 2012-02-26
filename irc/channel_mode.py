@@ -1,6 +1,9 @@
 class ChannelMode:
     def __init__(self):
         self.operators = set()
+
+        # available_modes don't get reported in the mode string (it should be
+        # possible to query them individually however)
         # TODO: load defaults from config file
         self.modes = {'n': True, 't': True}
         self.available_modes = set({'n', 'o', 't'})
@@ -9,6 +12,12 @@ class ChannelMode:
         enabled_flags = [flag for flag, is_on in self.modes.items() if is_on]
         enabled_flags.sort()
         return '+' + str.join('', enabled_flags)
+
+    def is_op(self, client):
+        return client in self.operators
+
+    def set_topic_needs_ops(self):
+        return self.modes['t']
 
     def set(self, mode, enable, params = None):
         """ sets the given mode

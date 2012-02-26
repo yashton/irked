@@ -52,10 +52,13 @@ class Channel:
         self._send(kicker, "KICK %s %s :%s" % (self.name, kickee, reason))
 
     def set_topic(self, client, topic):
-        # TODO permissions
-        # ERR_CHANOPRIVSNEEDED            ERR_NOCHANMODES
         if client not in self.clients:
             client.helper_not_in_channel(channel_name)
+            return
+
+        if self.modes.set_topic_needs_ops() and not self.modes.is_op(client):
+            client.connection._send(irc.ERR_CHANOPRIVSNEEDED,
+                                  channel=self.name)
             return
 
         self.server.logger.debug("Setting topic for %s: %s",
