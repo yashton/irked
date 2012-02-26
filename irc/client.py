@@ -26,11 +26,7 @@ class IrcClient(IrcClientMessageMixin):
         self.connection._send(irc.RPL_ENDOFMOTD)
 
     def cmd_join(self, args):
-        # TODO: support multiple channels at once
-        # TODO: support leaving all channels ('0')
         # TODO: support keys
-        channel = args[0]
-
         if len(args) == 0:
             self.connection._send(irc.ERR_NEEDMOREPARAMS, command='JOIN')
             return
@@ -240,115 +236,30 @@ class IrcClient(IrcClientMessageMixin):
 
     def cmd_chan_mode(self, target, args):
         self.server.logger.debug("MODE channel %s: %s", target, args)
+
+        if target not in self.server.channels:
+            self.connection._send(irc.ERR_NOSUCHCHANNEL, channel=target)
+            return
         channel = self.server.channels[target]
-        if channel.modes is None:
-            self.connection._send(irc.ERR_NOCHANMODES, channel=target)
-        #TODO Only handling single mode changes
+
         if len(args) == 0:
-            modes = channel.modes.user_mode(self.connection.nick)
+            modes = channel.modes.mode_string()
+            mode_params = '' # we don't support any mode params right now
             self.connection._send(irc.RPL_CHANNELMODEIS,
-                                  channel=target, mode=self.connection.nick, params=modes)
-        elif len(args) == 1:
-            if self not in channel.modes.operators:
-                self.helper_chan_op_privs_needed(target)
-                return
-            command = args[0]
-            if command == '+a' or command == '-a':
-                channel.modes.anonymous = command[0] == '+'
-            elif command == '+m' or command == '-m':
-                channel.modes.moderated = command[0] == '+'
-            elif command == '+i' or command == '-i':
-                channel.modes.invite = command[0] == '+'
-            elif command == '+n' or command == '-n':
-                channel.modes.no_message = command[0] == '+'
-            elif command == '+p' or command == '-p':
-                channel.modes.private = command[0] == '+'
-            elif command == '+s' or command == '-s':
-                channel.modes.secret = command[0] == '+'
-            elif command == '+r' or command == '-r':
-                if target[0] == '!':
-                    channel.modes.reop = command[0] == '+'
-            elif command == '+t' or command == '-t':
-                channel.modes.topic = command[0] == '+'
-            elif command == '-l':
-                channel.modes.limit = None
-            elif command == '-k':
-                channel.modes.key = None
-            elif command == '+b':
-                self.helper_ban_list(target, channel)
-            elif command == '+e':
-                self.helper_exception_list(target, channel)
-            elif command == '+I':
-                self.helper_invite_list(target, channel)
-            elif command == 'O':
-                self.connection._send(irc.RPL_UNIQOPIS,
-                                      channel=target, nickname=channel.modes.creator.connection.nick)
-            else:
-                self.connection._send(irc.ERR_UNKNOWNMODE,
-                                      mode=command, channel=target)
-        elif len(args) == 2:
-            if self not in channel.modes.operators:
-                self.helper_chan_op_privs_needed(target)
-                return
-            command, param = args
-            if command == '+k':
-                if channel.modes.key is None:
-                    channel.modes.key = param
-                else:
-                    self.connection._send(irc.ERR_KEYSET,
-                                          channel=target)
-            elif command == '+l':
-                channel.limit = int(param)
-            elif command == '+o' or command == '-o':
-                client = self.server.clients[param]
-                if client not in channel.clients:
-                    self.helper_not_in_channel(param, target)
-                else:
-                    if command[0] == '+':
-                        channel.modes.operators.add(client)
-                    else:
-                        try:
-                            channel.modes.operators.remove(client)
-                        except KeyError:
-                            pass
-            elif command == '+v' or command == '-v':
-                client = self.server.clients[param]
-                if client not in channel.clients:
-                    self.helper_not_in_channel(param, target)
-                else:
-                    if command[0] == '+':
-                        channel.modes.voice.add(client)
-                    else:
-                        try:
-                            channel.modes.voice.remove(client)
-                        except KeyError:
-                            pass
-            elif command == '+I' or command == '-I':
-                if command[0] == '+':
-                    channel.invite_masks.add(param)
-                else:
-                    try:
-                        channel.invite_masks.remove(param)
-                    except KeyError:
-                        pass
-            elif command == '+b' or command == '-b':
-                if command[0] == '+':
-                    channel.ban_masks.add(param)
-                else:
-                    try:
-                        channel.ban_masks.remove(param)
-                    except KeyError:
-                        pass
-            elif command == '+e' or command == '-e':
-                if command[0] == '+':
-                    channel.exception_masks.add(param)
-                else:
-                    try:
-                        channel.exception_masks.remove(param)
-                    except KeyError:
-                        pass
-        else:
-            self.connection._send(irc.ERR_NEEDMOREPARAMS, command='MODE')
+                    channel=target, modes=modes, params=mode_params)
+            return
+
+        # TODO: support setting all modes at once
+        match = re.match('([-+])([a-zA-Z])(?: +)?(.*)', args[0])
+        if not match:
+            return
+
+        op, mode, params = match.groups()
+        to_add = op == '+'
+        mode_changed = channel.modes.set(mode, to_add, params)
+        if mode_changed:
+            channel._send(self,
+                    'MODE %s %s%s %s' % (target, op, mode, params))
 
     def cmd_oper(self, args):
         if len(args) != 2:

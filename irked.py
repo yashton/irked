@@ -334,7 +334,7 @@ class IrcDispatcher(asyncore.dispatcher):
         for client in self.channels[channel].clients:
             if client == sender and not notify_sender:
                 continue
-            client.connection.raw_send('%s %s\n' % (sender.prefix(), message))
+            client.connection.raw_send('%s %s\r\n' % (sender.prefix(), message))
 
     def prefix(self):
         # FIXME

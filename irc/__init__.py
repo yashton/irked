@@ -311,7 +311,7 @@ IRC_CODE = {
     RPL_LISTEND :
        ("RPL_LISTEND", ":End of LIST"),
     RPL_CHANNELMODEIS :
-       ("RPL_CHANNELMODEIS", "%(channel)s %(mode)s %(params)s"),
+       ("RPL_CHANNELMODEIS", "%(channel)s %(modes)s %(params)s"),
     RPL_UNIQOPIS :
        ("RPL_UNIQOPIS", "%(channel)s %(nickname)s"),
     RPL_NOTOPIC :

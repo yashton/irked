@@ -1,25 +1,41 @@
 class ChannelMode:
     def __init__(self):
-        self.creator = None
         self.operators = set()
-        self.voice = set()
+        # TODO: load defaults from config file
+        self.modes = {'n': True, 't': True}
+        self.available_modes = set({'n', 'o', 't'})
 
-        self.anonymous = False
-        self.moderated = False
-        self.invite = False
-        self.no_message = False
-        self.quiet = False
-        self.private = False
-        self.secret = False
-        self.reop = False
-        self.topic = False
+    def mode_string(self):
+        enabled_flags = [flag for flag, is_on in self.modes.items() if is_on]
+        enabled_flags.sort()
+        return '+' + str.join('', enabled_flags)
 
-        self.ban_masks = set()
-        self.exception_masks = set()
-        self.invite_masks = set()
+    def set(self, mode, enable, params = None):
+        """ sets the given mode
 
-        self.key = None
-        self.limit = None
+            mode: a single character (n, o, or t)
+            enable: boolean
+            params: mode params
+
+            returns True if the mode was changed """
+
+        if mode not in self.available_modes:
+            return
+
+        if mode == 'o':
+            # TODO: op removal
+            return
+
+        if enable:
+            if self.modes[mode]:
+                return
+            self.modes[mode] = True
+        else:
+            if not self.modes[mode]:
+                return
+            self.modes[mode] = False
+
+        return True
 
     def user_mode(self, nick):
         #TODO return real values
