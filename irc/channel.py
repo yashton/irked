@@ -30,6 +30,17 @@ class Channel:
         else:
             client.connection._send(irc.ERR_NOTONCHANNEL, channel=self.name)
 
+    def privmsg(self, sender, message):
+        if self.modes.insiders_only() and sender not in self.clients:
+            sender.connection._send(irc.ERR_CANNOTSENDTOCHAN, channel=self.name)
+            return
+
+        # TODO: check ban lists, moderation, etc.
+
+        self._send(sender,
+                'PRIVMSG %s :%s' % (self.name, message),
+                notify_sender = False)
+
     def kick(self, kicker, kickee, reason):
         # TODO: kickee probably can be more than just a nick
 

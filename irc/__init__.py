@@ -398,7 +398,7 @@ IRC_CODE = {
     ERR_NOSUCHCHANNEL :
        ("ERR_NOSUCHCHANNEL", "%(channel)s :No such channel"),
     ERR_CANNOTSENDTOCHAN :
-       ("ERR_CANNOTSENDTOCHAN", ""),
+       ("ERR_CANNOTSENDTOCHAN", "%(channel)s :Cannot send to channel"),
     ERR_TOOMANYCHANNELS :
        ("ERR_TOOMANYCHANNELS", ""),
     ERR_WASNOSUCHNICK :

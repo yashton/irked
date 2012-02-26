@@ -172,10 +172,10 @@ class IrcClient(IrcClientMessageMixin):
 
         # TODO: need to check channel modes to see if sending is allowed
         if re.match('#', target):
-            self.server.notify_channel(target,
-                    sender = self,
-                    message = 'PRIVMSG %s :%s' % (target, text),
-                    notify_sender = False)
+            if target not in self.server.channels:
+                self.connection._send(irc.ERR_NOSUCHNICK, nick=target)
+                return
+            self.server.channels[target].privmsg(self, text)
         else:
             # TODO, nick/etc messaging
             pass

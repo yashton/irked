@@ -19,6 +19,9 @@ class ChannelMode:
     def set_topic_needs_ops(self):
         return self.modes['t']
 
+    def insiders_only(self):
+        return self.modes['n']
+
     def set(self, mode, enable, params = None):
         """ sets the given mode
 
