@@ -148,14 +148,14 @@ class IrcHandler(asyncore.dispatcher):
     def cmd_nick(self, args):
         # TODO: err irc.ERR_UNAVAILRESOURCE
         if not len(args):
-            self._send(irc.ERR_NONICKNAMEGIVEN)
+            self.reply(irc.ERR_NONICKNAMEGIVEN)
             return
 
         # TODO: validate nickname (irc.ERR_ERRONEUSNICKNAME)
 
         nick = args[0]
         if nick in self.server.clients:
-            self._send(irc.ERR_NICKNAMEINUSE, nickname=nick)
+            self.reply(irc.ERR_NICKNAMEINUSE, nickname=nick)
             return
 
         # TODO: nickname collision (irc.ERR_NICKCOLLISION) -- multiple server stuff
@@ -178,11 +178,11 @@ class IrcHandler(asyncore.dispatcher):
 
     def cmd_user(self, args):
         if len(args) < 4:
-            self._send(irc.ERR_NEEDMOREPARAMS, command='USER')
+            self.reply(irc.ERR_NEEDMOREPARAMS, command='USER')
             return
 
         if self.registered:
-            self._send(irc.ERR_ALREADYREGISTRED)
+            self.reply(irc.ERR_ALREADYREGISTRED)
 
         user = args[0]
         mode = args[1]
@@ -196,16 +196,16 @@ class IrcHandler(asyncore.dispatcher):
     def register(self):
         # TODO? write a nick-changing method that checks for this nick (race condition?)
         self.registered = True
-        self._send(irc.RPL_WELCOME,
+        self.reply(irc.RPL_WELCOME,
                    nick=self.nick,
                    user=self.user[0],
                    host=self.host)
-        self._send(irc.RPL_YOURHOST,
+        self.reply(irc.RPL_YOURHOST,
                    server=self.server.name,
                    version=self.server.version)
-        self._send(irc.RPL_CREATED,
+        self.reply(irc.RPL_CREATED,
                    launched=self.server.launched)
-        self._send(irc.RPL_MYINFO,
+        self.reply(irc.RPL_MYINFO,
                    server=self.server.name,
                    version=self.server.version,
                    user_modes=irc.mode_str(self.server.user_modes),
@@ -214,9 +214,9 @@ class IrcHandler(asyncore.dispatcher):
         self.server.clients[self.nick] = self.handler
 
     def _err_need_more_params(self, command):
-        self._send(irc.ERR_NEEDMOREPARAMS, '%s :Not enough parameters' % command)
+        self.reply(irc.ERR_NEEDMOREPARAMS, '%s :Not enough parameters' % command)
 
-    def _send(self, code, **format_args):
+    def reply(self, code, **format_args):
         name, message = irc.IRC_CODE[code]
         formatted_message = message % format_args
         msg = '%s %03d %s %s\n' % (self.server.prefix(), code, self.nick or "*", formatted_message)
