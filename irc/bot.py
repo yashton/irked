@@ -1,12 +1,8 @@
 '''IRC automated client (bot) helper module'''
-import asynchat
 import random
 import linecache
 import re
 import subprocess
-import socket as _socket
-import select
-import sys
 import time
 import irc
 
@@ -17,7 +13,8 @@ COMMANDS = {
     "OPER" : "OPER %(user)s %(pass)s",
     "USER_MODE" : "MODE %(nick)s %(change)s",
     "CHANNEL_MODE" : "MODE %(channel) %(change)s %(params)s",
-    "SERVICE" : "SERVICE %(nickname)s %(reserved)s %(distribution)s %(type)s %(reserved)s %(info)s",
+    "SERVICE" : "SERVICE %(nickname)s %(reserved)s %(distribution)s " + \
+        "%(type)s %(reserved)s %(info)s",
     "QUIT" : "QUIT :%(message)s",
     "SQUIT" : "SQUIT %(server)s :%(comment)s",
     "JOIN" : "JOIN %(channel)s %(key)s",
@@ -262,7 +259,7 @@ class WordGen:
     def sentence(self, length=None):
         output = list()
         if length is None:
-            length = random.randint(1,20)
+            length = random.randint(1, 20)
         while length > 0:
             output.append(self.word())
             length -= 1
@@ -272,7 +269,10 @@ class WordGen:
     def garbage(self, length, alphanum=True):
         chars = list()
         while length > 0:
-            char = random.choice(ALPHANUM) if alphanum else random.randint(33, 126)
+            if alphanum:
+                char = random.choice(ALPHANUM)
+            else:
+                char = random.randint(33, 126)
             chars.append(chr(char))
             length -= 1
         return "".join(chars)
@@ -315,7 +315,7 @@ class Bot():
                 self.send("PRIVMSG",
                           target=args[2],
                           message=self.generator.sentence())
-                time.sleep(random.randint(1,5))
+                time.sleep(random.randint(1, 5))
         except:
             pass
 

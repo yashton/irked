@@ -1,14 +1,6 @@
 import irc
 
 class IrcClientMessageMixin:
-    def helper_not_in_channel(self, channel_name):
-        self.server.logger.debug("Topic request from nick %s "+ \
-                                     "not a member of channel %s",
-                                 self.connection.nick,
-                                 channel_name)
-        self.connection.reply(irc.ERR_NOTONCHANNEL,
-                              channel_name=channel_name)
-
     def helper_ban_list(self, channel_name, channel):
         for mask in channel.ban_masks:
             self.connection.reply(irc.RPL_BANLIST,
@@ -29,11 +21,6 @@ class IrcClientMessageMixin:
                                   channel=channel_name, mask=mask)
         self.connection.reply(irc.RPL_ENDOFINVITELIST,
                               channel=channel_name)
-
-
-    def helper_not_in_channel(self, nick, channel):
-        self.connection.reply(irc.ERR_USERNOTINCHANNEL,
-                              nickname=nick, channel=channel)
 
     def helper_chan_op_privs_needed(self, channel):
         self.connection.reply(irc.ERR_CHANOPRIVSNEEDED, channel=channel)

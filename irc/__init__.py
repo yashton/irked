@@ -247,7 +247,8 @@ IRC_CODE = {
        ("RPL_STATSDLINE", ""),
     RPL_LUSERCLIENT :
        ("RPL_LUSERCLIENT",
-        ':There are %(users)d users and %(services)d services on %(servers)d servers'),
+        ':There are %(users)d users and %(services)d ' + \
+            'services on %(servers)d servers'),
     RPL_LUSEROP :
        ("RPL_LUSEROP", 
         '%(opers)d :operator(s) online'),

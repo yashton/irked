@@ -1,11 +1,11 @@
 import sys
 import socket
 import select
-from irc.bot import *
+import irc.bot
 
 epoll = select.epoll()
 generator = irc.bot.WordGen('/usr/share/dict/words')
-connections = {};
+connections = {}
 
 def ready(fileno):
     return lambda: epoll.modify(fileno, select.EPOLLOUT)

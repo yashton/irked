@@ -31,7 +31,7 @@ class IrcClient(IrcClientMessageMixin):
             self.connection.reply(irc.ERR_NEEDMOREPARAMS, command='JOIN')
             return
 
-        if args[0] =="0":
+        if args[0] == "0":
             for channel in self.server.channels.values():
                 channel.remove(self)
             return
@@ -71,7 +71,8 @@ class IrcClient(IrcClientMessageMixin):
 
         if len(args):
             message = '%s QUIT :%s\r\n' % (self.prefix(), args[0])
-            err_msg = 'ERROR :Closing Link: %s (%s)\r\n' % (self.prefix(), args[0])
+            err_msg = 'ERROR :Closing Link: %s (%s)\r\n' % \
+                (self.prefix(), args[0])
         else:
             message = '%s QUIT\r\n' % self.prefix()
             err_msg = 'ERROR :Closing Link: %s\r\n' % self.prefix()
@@ -114,14 +115,16 @@ class IrcClient(IrcClientMessageMixin):
         # TODO: this probably needs to support some channel mode stuff
         if len(args):
             names = re.split(",", args[0])
-            channels = [self.server.channels[n] for n in names if n in self.server.channels]
+            channels = [self.server.channels[n] for n in names
+                        if n in self.server.channels]
         else:
             channels = self.server.channels.values()
 
         for channel in channels:
+            # need to check visibility here
             self.connection.reply(irc.RPL_LIST,
                                   channel=channel.name,
-                                  visible=len(channel.clients), # need to check visibility here
+                                  visible=len(channel.clients),
                                   topic=channel.topic or "")
         self.connection.reply(irc.RPL_LISTEND)
 
@@ -226,10 +229,12 @@ class IrcClient(IrcClientMessageMixin):
             self.connection.reply(irc.ERR_USERSDONTMATCH)
             return
         if len(args) == 0:
-            self.connection.reply(irc.RPL_UMODEIS, mode=irc.mode_str(self.modes))
+            self.connection.reply(irc.RPL_UMODEIS,
+                                  mode=irc.mode_str(self.modes))
             return
         op, flag = args[0]
-        if not (flag in irc.IRC_USER_MODES and (op != '+' or op != '-')) or args[0] == '+o':
+        if not (flag in irc.IRC_USER_MODES and (op != '+' or op != '-')) \
+           or args[0] == '+o':
             self.connection.reply(irc.ERR_UMODEUNKNOWNFLAG)
             return
         self.modes[flag] = op == "+"
@@ -302,8 +307,12 @@ class IrcClient(IrcClientMessageMixin):
                 self.connection.reply(irc.ERR_CHANOPRIVSNEEDED,
                                       channel=channel_name)
                 return
-        self.connection.reply(irc.RPL_INVITING, nickname=nickname, channel=channel_name)
-        target.connection.reply(irc.RPL_INVITING, nickname=nickname, channel=channel_name)
+        self.connection.reply(irc.RPL_INVITING,
+                              nickname=nickname,
+                              channel=channel_name)
+        target.connection.reply(irc.RPL_INVITING,
+                                nickname=nickname,
+                                channel=channel_name)
 
     def cmd_lusers(self, args):
         '''Implements RFC 2812 Section 3.4.2'''

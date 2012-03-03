@@ -24,7 +24,6 @@ import irc
 import time
 import subprocess
 import os.path
-import sys
 import argparse
 import configparser
 from irc.client import IrcClient, IrcServer
@@ -96,7 +95,8 @@ class IrcHandler(asyncore.dispatcher):
         #nick     = '[a-zA-Z\[\]\\`_^{}]+[-a-zA-Z\[\]\\`_^{}]'
         #user     = '[\x01-\x09\x0b-\x0c\x0e-\x1f\x21-\x3f\x41-\xff]+'
 
-        #prefix  = '(?::(?P<prefix>%s|%s!%s@%s) +)?' % (hostname, nick, user, hostname)
+        #prefix  =
+        # '(?::(?P<prefix>%s|%s!%s@%s) +)?' % (hostname, nick, user, hostname)
         #command = '(?P<command>[a-zA-Z]+|\d\d\d)'
         #params  = '(?P<params>.*)'
 
@@ -125,11 +125,12 @@ class IrcHandler(asyncore.dispatcher):
 
     def dispatch(self, msg):
         command, args = self.parse(msg)
-        self.server.logger.debug('received from %s: command=%s args=%s', self.nick, command, args)
+        self.server.logger.debug('received from %s: command=%s args=%s',
+                                 self.nick, command, args)
 
         if command == 'PASS':
             pass
-            #TODO password hashing 
+            #TODO password hashing
         elif command == 'NICK':
             self.cmd_nick(args)
         elif command == 'USER':
@@ -141,7 +142,8 @@ class IrcHandler(asyncore.dispatcher):
             if self.handler is not None:
                 self.handler.cmd(command, args)
             else:
-                self.server.logger.error("Command %s was sent before USER or SERVER: %s",
+                format_str = "Command %s was sent before USER or SERVER: %s"
+                self.server.logger.error(format_str,
                                          command,
                                          msg)
 
@@ -158,7 +160,7 @@ class IrcHandler(asyncore.dispatcher):
             self.reply(irc.ERR_NICKNAMEINUSE, nickname=nick)
             return
 
-        # TODO: nickname collision (irc.ERR_NICKCOLLISION) -- multiple server stuff
+        # TODO: nickname collision (irc.ERR_NICKCOLLISION) multiple server stuff
 
         # TODO: restricted (irc.ERR_RESTRICTED)
         # i'm not really sure when it's best to lock the nick, freenode
@@ -194,7 +196,8 @@ class IrcHandler(asyncore.dispatcher):
             self.register()
 
     def register(self):
-        # TODO? write a nick-changing method that checks for this nick (race condition?)
+        # TODO? write a nick-changing method that checks for this nick
+        # (race condition?)
         self.registered = True
         self.reply(irc.RPL_WELCOME,
                    nick=self.nick,
@@ -214,12 +217,16 @@ class IrcHandler(asyncore.dispatcher):
         self.server.clients[self.nick] = self.handler
 
     def _err_need_more_params(self, command):
-        self.reply(irc.ERR_NEEDMOREPARAMS, '%s :Not enough parameters' % command)
+        self.reply(irc.ERR_NEEDMOREPARAMS,
+                   '%s :Not enough parameters' % command)
 
     def reply(self, code, **format_args):
         name, message = irc.IRC_CODE[code]
         formatted_message = message % format_args
-        msg = '%s %03d %s %s\n' % (self.server.prefix(), code, self.nick or "*", formatted_message)
+        msg = '%s %03d %s %s\n' % (self.server.prefix(),
+                                   code,
+                                   self.nick or "*",
+                                   formatted_message)
         self.server.logger.debug("sent %s to %s", name, self.nick)
         self.raw_send(msg)
 
@@ -239,7 +246,8 @@ class IrcHandler(asyncore.dispatcher):
         return self.getsockname()[0]
 
     def __repr__(self):
-        return "<IrcClient: nick=" + repr(self.nick) + " registered=" + repr(self.registered) + " user=" + repr(self.user) + ">"
+        return "<IrcClient: nick=%s registered=%s user=%s>" % \
+            (repr(self.nick), repr(self.registered), repr(self.user))
 
 class IrcDispatcher(asyncore.dispatcher):
 
@@ -341,7 +349,10 @@ class IrcDispatcher(asyncore.dispatcher):
         return ':%s' % self.name
 
     def __repr__(self):
-        return "<IrcServer: clients=" + repr(self.connections) + " names=" + repr(self.clients.keys()) + " channels=" + repr(self.channels) + ">"
+        return "<IrcServer: clients=%s names=%s channels=%s>" % \
+            (repr(self.connections),
+             repr(self.clients.keys()),
+             repr(self.channels))
 
     def gen_version(self):
         '''Fetch the current revision number for the working directory for
@@ -353,12 +364,13 @@ class IrcDispatcher(asyncore.dispatcher):
                         "--template", "{rev}:{node|short} ({date|isodate})"]
             version = subprocess.check_output(command)
             return "%s-%s" % ("irked", version.decode("utf-8"))
-        except CalledProcessError:
+        except subprocess.CalledProcessError:
             return "unknown"
 
     def info(self):
         '''Returns an iterable set of info lines.'''
-        yield "irked IRC daemon version %(version)s" % {'version' : self.gen_version()}
+        yield "irked IRC daemon version %(version)s" % \
+            {'version' : self.gen_version()}
         if os.path.isfile(self.info_file):
             for line in open(self.info_file):
                 yield line.rstrip()
@@ -372,8 +384,9 @@ class IrcDispatcher(asyncore.dispatcher):
         return True
 
 if __name__ == '__main__':
+    epilog = 'Command line options have priority over config file values.'
     parser = argparse.ArgumentParser(description='irked IRC daemon.',
-                                     epilog='Command line options have priority over config file values.')
+                                     epilog=epilog)
     parser.add_argument('-s', '--server',
                         nargs='?', default=None,
                         help='Server host bind address.')

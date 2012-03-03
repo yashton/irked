@@ -15,7 +15,9 @@ class Channel:
         self._send(client, 'JOIN %s' % self.name)
 
         if self.topic:
-            client.connection.reply(irc.RPL_TOPIC, channel=self.name, topic=self.topic)
+            client.connection.reply(irc.RPL_TOPIC,
+                                    channel=self.name,
+                                    topic=self.topic)
 
         self.rpl_name_reply(client)
 
@@ -45,7 +47,8 @@ class Channel:
         # TODO: kickee probably can be more than just a nick
 
         if kicker not in self.clients:
-            kicker.connection.reply(irc.ERR_NOTONCHANNEL, channel_name=self.name)
+            kicker.connection.reply(irc.ERR_NOTONCHANNEL,
+                                    channel_name=self.name)
             return
 
         if kicker not in self.modes.operators:
@@ -64,7 +67,8 @@ class Channel:
 
     def set_topic(self, client, topic):
         if client not in self.clients:
-            client.helper_not_in_channel(channel_name)
+            client.connection.reply(irc.ERR_NOTONCHANNEL,
+                                    channel_name=self.name)
             return
 
         if self.modes.set_topic_needs_ops() and not self.modes.is_op(client):
@@ -86,10 +90,10 @@ class Channel:
         # TODO: check that client is allowed to see the topic
         if self.topic:
             client.connection.reply(irc.RPL_TOPIC,
-                    channel=self.name, topic=self.topic)
+                                    channel=self.name, topic=self.topic)
         else:
-            self.connection.reply(irc.RPL_NOTOPIC,
-                    channel=channel_name)
+            client.connection.reply(irc.RPL_NOTOPIC,
+                                    channel=self.name)
 
     def rpl_name_reply(self, client):
         names = [c.connection.nick for c in self.clients]
