@@ -16,13 +16,12 @@ class IrcClient(IrcClientMessageMixin):
 
     def cmd_motd(self, args):
         #TODO Need to fetch motd from other servers.
-        if (not os.path.isfile(self.server.motd)):
+        if (not self.server.has_motd()):
             self.connection.reply(irc.ERR_NOMOTD)
             return
         self.connection.reply(irc.RPL_MOTDSTART, server=self.server.name)
-        motd = open(self.server.motd)
-        for line in motd:
-            self.connection.reply(irc.RPL_MOTD, motd_line=line.rstrip())
+        for line in self.server.motd():
+            self.connection.reply(irc.RPL_MOTD, motd_line=line)
         self.connection.reply(irc.RPL_ENDOFMOTD)
 
     def cmd_join(self, args):

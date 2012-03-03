@@ -297,7 +297,7 @@ class IrcDispatcher(asyncore.dispatcher):
             name = config.get('server', 'name', fallback=DEFAULT_NAME)
         self.name = name
 
-        self.motd = config.get('server', 'motd_file', fallback=MOTD_FILE)
+        self.motd_file = config.get('server', 'motd_file', fallback=MOTD_FILE)
         self.info_file = config.get('server', 'info_file', fallback=INFO_FILE)
 
     def init_logger(self):
@@ -366,6 +366,16 @@ class IrcDispatcher(asyncore.dispatcher):
             return "%s-%s" % ("irked", version.decode("utf-8"))
         except subprocess.CalledProcessError:
             return "unknown"
+
+    def has_motd(self):
+        '''Indicates whether a message of the day is available.'''
+        return os.path.isfile(self.motd_file)
+
+    def motd(self):
+        '''Returns an iterable set of motd lines.'''
+        if os.path.isfile(self.motd_file):
+            for line in open(self.motd_file):
+                yield line.rstrip()
 
     def info(self):
         '''Returns an iterable set of info lines.'''
