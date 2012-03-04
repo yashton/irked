@@ -289,7 +289,8 @@ IRC_CODE = {
     RPL_NOWAWAY :
        ("RPL_NOWAWAY", ""),
     RPL_WHOISUSER :
-       ("RPL_WHOISUSER", ""),
+       ("RPL_WHOISUSER",
+        "%(nick)s %(user)s %(host)s * :%(realname)s"),
     RPL_WHOISSERVER :
        ("RPL_WHOISSERVER", ""),
     RPL_WHOISOPERATOR :
@@ -303,7 +304,7 @@ IRC_CODE = {
     RPL_WHOISIDLE :
        ("RPL_WHOISIDLE", ""),
     RPL_ENDOFWHOIS :
-       ("RPL_ENDOFWHOIS", ""),
+       ("RPL_ENDOFWHOIS", ":End of WHOIS list"),
     RPL_WHOISCHANNELS :
        ("RPL_WHOISCHANNELS", ""),
     RPL_LISTSTART :

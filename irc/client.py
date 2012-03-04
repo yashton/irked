@@ -182,6 +182,33 @@ class IrcClient(IrcClientMessageMixin):
             # TODO, nick/etc messaging
             pass
 
+    def cmd_whois(self, args):
+        # TODO: support server target
+
+        target = None
+        mask_list = None
+
+        if len(args) == 0:
+            self.connection.reply(irc.ERR_NEEDMOREPARAMS, command='WHOIS')
+            return
+        if len(args) > 1:
+            target = args[0]
+            mask_list = args[1]
+        else:
+            mask_list = args[0]
+
+        masks = re.split(',', mask_list)
+
+        for mask in masks:
+            # TODO: support masks instead of nicks
+            # TODO: support whois on servers
+            if mask not in self.server.clients:
+                self.connection.reply(irc.ERR_NOSUCHNICK, nickname=mask)
+                return
+
+            client = self.server.clients[mask]
+            client.rpl_whoami(requester=self)
+
     def cmd_ping(self, args):
         # TODO: multi-server stuff
         if not len(args):
@@ -371,10 +398,31 @@ class IrcClient(IrcClientMessageMixin):
             return
         cmd(args)
 
+    def nick(self):
+        return self.connection.nick
+
+    def username(self):
+        return self.connection.user[0]
+
+    def host(self):
+        return self.connection._host()
+
+    def name(self):
+        return self.connection.user[2]
+
     def prefix(self):
-        nick = self.connection.nick
-        username = self.connection.user[0]
-        return ":%s!%s@%s" % (nick, username, self.connection._host())
+        return ":%s!%s@%s" % (self.nick(), self.username(), self.host())
+
+    def rpl_whoami(self, requester):
+        requester.connection.reply(irc.RPL_WHOISUSER,
+                nick=self.nick(), user=self.username(), host=self.host(),
+                realname=self.name())
+        # TODO: irc.RPL_WHOISOPERATOR
+        # TODO: irc.RPL_WHOISCHANNELS
+        # TODO: irc.RPL_WHOISSERVER
+        # TODO: irc.RPL_AWAY
+        # TODO: irc.RPL_WHOISIDLE
+        requester.connection.reply(irc.RPL_ENDOFWHOIS)
 
 class IrcServer:
     def cmd_server(self, args):
