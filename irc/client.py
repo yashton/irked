@@ -179,8 +179,13 @@ class IrcClient(IrcClientMessageMixin):
                 return
             self.server.channels[target].privmsg(self, text)
         else:
-            # TODO, nick/etc messaging
-            pass
+            # TODO: support masks?
+            if target not in self.server.clients:
+                self.connection.reply(irc.ERR_NOSUCHNICK, nickname=target)
+                return
+            recipient = self.server.clients[target]
+            recipient.connection.raw_send('%s PRIVMSG %s :%s\r\n' %
+                    (self.prefix(), recipient.connection.nick, text))
 
     def cmd_whois(self, args):
         # TODO: support server target
