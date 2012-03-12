@@ -26,7 +26,8 @@ import subprocess
 import os.path
 import argparse
 import configparser
-from irc.client import IrcClient, IrcServer
+from irc.client import IrcClient
+from irc.server import IrcServer
 from irc.channel import Channel
 
 MOTD_FILE = "motd"
@@ -44,6 +45,7 @@ DEFAULT_PORT = 6667
 DEFAULT_NAME = 'irked.server'
 
 class IrcHandler(asyncore.dispatcher):
+    sent_server = False
 
     def __init__(self, socket, server):
         asyncore.dispatcher.__init__(self, socket)
@@ -135,9 +137,8 @@ class IrcHandler(asyncore.dispatcher):
             self.cmd_nick(args)
         elif command == 'USER':
             self.cmd_user(args)
-        elif command == 'SERVER':
-            self.handler = IrcServer(self, self.server)
-            self.handler.cmd_server(args)
+        elif command == 'SERVER' and not self.registered:
+            self.cmd_server(args)
         else:
             if self.handler is not None:
                 self.handler.cmd(command, args)
@@ -194,6 +195,26 @@ class IrcHandler(asyncore.dispatcher):
         self.has_user = True
         if self.has_nick:
             self.register()
+
+    def cmd_server(self, args):
+        if len(args) != 4:
+            self.reply(irc.ERR_NEEDMOREPARAMS, command='SERVER')
+
+        servername, hopcount, token, info = args
+        self.nick = servername
+        self.registered = True
+        self.handler = IrcServer(self, self.server)
+        self.server.servers[self.nick] = self.handler
+        self.handler.hopcount = hopcount
+        self.handler.token = token
+        self.handler.info = info
+        if not self.sent_server:
+            self.raw_send("PASS %s\r\n" % 'password')
+            self.raw_send("SERVER %s %d %s :%s\r\n" % (self.server.name,
+                                                       1,
+                                                       "token",
+                                                       "test info"))
+            self.sent_server = True
 
     def register(self):
         # TODO? write a nick-changing method that checks for this nick
@@ -323,6 +344,18 @@ class IrcDispatcher(asyncore.dispatcher):
                          LOGGER,
                          log_level,
                          log_file)
+
+    def sconnect(self, server, port):
+        socket = _socket.socket(_socket.AF_INET, _socket.SOCK_STREAM)
+        socket.connect((server, port))
+        handler = IrcHandler(socket, self)
+        self.connections.add(handler)
+        handler.raw_send("PASS %s\r\n" % "password")
+        handler.raw_send("SERVER %s %d %s :%s\r\n" % (self.name, 1, "token", "Test server"))
+        handler.sent_server = True
+
+    def squit(self, server, comment):
+        pass
 
     def channel_add(self, channel, owner):
         self.channels[channel] = Channel(channel, self)

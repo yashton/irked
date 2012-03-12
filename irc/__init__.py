@@ -493,7 +493,7 @@ IRC_CODE = {
     ERR_BANLISTFULL :
        ("ERR_BANLISTFULL", ""),
     ERR_NOPRIVILEGES :
-       ("ERR_NOPRIVILEGES", ""),
+       ("ERR_NOPRIVILEGES", ":Permission Denied- You're not an IRC operator"),
     ERR_CHANOPRIVSNEEDED :
        ("ERR_CHANOPRIVSNEEDED",
         "%(channel)s :You're not channel operator"),

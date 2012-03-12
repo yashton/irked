@@ -89,6 +89,35 @@ class IrcClient(IrcClientMessageMixin):
         self.connection.raw_send(err_msg)
         self.connection.close()
 
+    def cmd_squit(self, args):
+        if not self.modes['o']:
+            self.connection.reply(irc.ERR_NOPRIVILEGES)
+        if len(args) != 2:
+            self.connection.reply(irc.ERR_NEEDMOREPARAMS, command='SQUIT')
+            return
+        target_server, comment = args
+        if not target_server in self.servers.servers:
+            self.connection.reply(irc.ERR_NOSUCHSERVER, server=target_server)
+            return
+        self.server.squit(target_server, comment)
+
+    def cmd_connect(self, args):
+        if not self.modes['o']:
+            self.connection.reply(irc.ERR_NOPRIVILEGES)
+        if len(args) == 2:
+            server, port = args
+        elif len(args) == 3:
+            server, port, remote = args
+        else:
+            self.connection.reply(irc.ERR_NEEDMOREPARAMS, command='CONNECT')
+            return
+        try:
+            #TODO remote connect
+            self.server.sconnect(server, int(port))
+        except Exception as err:
+            self.server.logger.error("Error connecting to server: %s", err)
+            self.connection.reply(irc.ERR_NOSUCHSERVER, server=server)
+
     def cmd_topic(self, args):
         self.server.logger.debug("TOPIC args: %s", args)
         if len(args) == 0:
@@ -428,7 +457,3 @@ class IrcClient(IrcClientMessageMixin):
         # TODO: irc.RPL_AWAY
         # TODO: irc.RPL_WHOISIDLE
         requester.connection.reply(irc.RPL_ENDOFWHOIS)
-
-class IrcServer:
-    def cmd_server(self, args):
-        pass
