@@ -355,7 +355,14 @@ class IrcDispatcher(asyncore.dispatcher):
         handler.sent_server = True
 
     def squit(self, server, comment):
-        pass
+        handler = self.servers[server]
+        try:
+            handler.connection.close()
+        except Exception as err:
+            self.logger.error("Exception during socket close: %s" % \
+                                  err)
+        finally:
+            del self.servers[server]
 
     def channel_add(self, channel, owner):
         self.channels[channel] = Channel(channel, self)

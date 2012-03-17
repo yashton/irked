@@ -96,7 +96,7 @@ class IrcClient(IrcClientMessageMixin):
             self.connection.reply(irc.ERR_NEEDMOREPARAMS, command='SQUIT')
             return
         target_server, comment = args
-        if not target_server in self.servers.servers:
+        if not target_server in self.server.servers:
             self.connection.reply(irc.ERR_NOSUCHSERVER, server=target_server)
             return
         self.server.squit(target_server, comment)
