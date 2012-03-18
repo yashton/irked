@@ -26,6 +26,7 @@ import subprocess
 import os.path
 import argparse
 import configparser
+import sys
 from irc.client import IrcClient
 from irc.server import IrcServer
 from irc.channel import Channel
@@ -277,6 +278,7 @@ class IrcDispatcher(asyncore.dispatcher):
         self.config = configparser.ConfigParser()
         self.config.read(self.config_file)
         self.init_logger()
+        self.setup_extensions()
         self.server_config(host, port, name)
 
         asyncore.dispatcher.__init__(self)
@@ -341,6 +343,38 @@ class IrcDispatcher(asyncore.dispatcher):
                          LOGGER,
                          log_level,
                          log_file)
+
+    def setup_extensions(self):
+        self.extensions = dict();
+        try:
+            load = self.config['extensions']
+        except KeyError:
+            self.logger.warning("No extensions configuration section. No extensions loaded.")
+            return
+        for name, location in load.items():
+            self.logger.info("Loading extension '%s'", name)
+            if len(location) > 0:
+                self.logger.info("Adding extension module path '%s'", location)
+                sys.path.insert(1, location)
+            try:
+                module = __import__(name)
+            except ImportError as err:
+                self.logger.error("Unable to import extension module '%s': %s",
+                                  name, err)
+                continue
+            try:
+                options = self.config[name]
+            except KeyError as err:
+                self.logger.warning("No extension configuration for '%s'", name)
+                options = dict()
+            try:
+                module.configure(options)
+            except AttributeError:
+                self.logger.error("Module '%s' does not provide method 'configure'",
+                                  name)
+                continue
+            self.extensions[name] = module
+        self.logger.debug("Loaded extensions: [%s]", ", ".join(self.extensions.keys()))
 
     def sconnect(self, server, port):
         socket = _socket.socket(_socket.AF_INET, _socket.SOCK_STREAM)
