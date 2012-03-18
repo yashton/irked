@@ -274,8 +274,10 @@ class IrcDispatcher(asyncore.dispatcher):
 
     def __init__(self, host=None, port=None, name=None, config=CONFIG_FILE):
         self.config_file = config
+        self.config = configparser.ConfigParser()
+        self.config.read(self.config_file)
         self.init_logger()
-        self.parse_config(host, port, name)
+        self.server_config(host, port, name)
 
         asyncore.dispatcher.__init__(self)
         self.create_socket(_socket.AF_INET, _socket.SOCK_STREAM)
@@ -304,28 +306,23 @@ class IrcDispatcher(asyncore.dispatcher):
                          self.version,
                          self.launched)
 
-    def parse_config(self, host, port, name):
-        config = configparser.ConfigParser()
-        config.read(self.config_file)
-
+    def server_config(self, host, port, name):
         if host is None:
-            host = config.get('server', 'host', fallback=DEFAULT_HOST)
+            host = self.config.get('server', 'host', fallback=DEFAULT_HOST)
         if port is None:
-            port = config.getint('server', 'port', fallback=DEFAULT_PORT)
+            port = self.config.getint('server', 'port', fallback=DEFAULT_PORT)
         self.address = (host, port)
 
         if name is None:
-            name = config.get('server', 'name', fallback=DEFAULT_NAME)
+            name = self.config.get('server', 'name', fallback=DEFAULT_NAME)
         self.name = name
 
-        self.motd_file = config.get('server', 'motd_file', fallback=MOTD_FILE)
-        self.info_file = config.get('server', 'info_file', fallback=INFO_FILE)
+        self.motd_file = self.config.get('server', 'motd_file', fallback=MOTD_FILE)
+        self.info_file = self.config.get('server', 'info_file', fallback=INFO_FILE)
 
     def init_logger(self):
-        config = configparser.ConfigParser()
-        config.read(self.config_file)
-        log_file = config.get("log", "log_file", fallback=LOG_FILE)
-        log_level_string = config.get("log", "log_level", fallback=None)
+        log_file = self.config.get("log", "log_file", fallback=LOG_FILE)
+        log_level_string = self.config.get("log", "log_level", fallback=None)
         if log_level_string is not None:
             try:
                 log_level = logging.__dict__[log_level_string]
