@@ -2,8 +2,12 @@ import os.path
 import re
 import time
 import irc
+import socket as _socket
 from irc.message import IrcClientMessageMixin
 
+#
+# IrcClient handles commands and data for IRC client connections
+#
 class IrcClient(IrcClientMessageMixin):
     def __init__(self, connection, server):
         self.server = server
@@ -44,6 +48,7 @@ class IrcClient(IrcClientMessageMixin):
     def cmd_part(self, args):
         if len(args) == 0:
             self.connection.reply(irc.ERR_NEEDMOREPARAMS, command='PART')
+            return
 
         channels = re.split(",", args[0])
 
@@ -61,6 +66,7 @@ class IrcClient(IrcClientMessageMixin):
                               time=time.asctime(time.localtime()))
 
     def cmd_quit(self, args):
+        # TODO: don't allow netsplit-style QUIT messages (2813#4.1.5)
         to_notify = set({self})
         to_leave = set()
         for channel in self.server.channels.values():
@@ -88,6 +94,9 @@ class IrcClient(IrcClientMessageMixin):
         # send error message (see RFC)
         self.connection.raw_send(err_msg)
         self.connection.close()
+
+        for server in self.server.servers.values():
+            server.connection.raw_send(message)
 
     def cmd_squit(self, args):
         if not self.modes['o']:
@@ -200,7 +209,8 @@ class IrcClient(IrcClientMessageMixin):
             return
 
         target, text = args[0:2]
-
+        text = self.server.extensions.transform_privmsg(text)
+        self.server.statistics.messages.record(1)
         # TODO: need to check channel modes to see if sending is allowed
         if re.match('#', target):
             if target not in self.server.channels:
@@ -381,7 +391,7 @@ class IrcClient(IrcClientMessageMixin):
         servers = len(self.server.servers) + 1
         clients = users + services
         unknowns = len(self.server.connections) + 1 - clients - servers
-        opers = len([i for i in self.server.clients.values() if i.modes['o']])
+        opers = len([i for i in self.server.clients.values() if i.is_op()])
         channels = len(self.server.channels)
         self.connection.reply(irc.RPL_LUSERCLIENT,
                               users=users, services=services, servers=servers)
@@ -397,6 +407,14 @@ class IrcClient(IrcClientMessageMixin):
             #TODO Multi server info
             server_name = args[0]
             self.connection.reply(irc.ERR_NOSUCHSERVER, server=server_name)
+
+        self.server.logger.debug("Server list: [%s]",
+                                 ", ".join(self.server.servers.keys()))
+        for server_name, server in self.server.servers.items():
+            self.server.logger.debug("Server %s", server_name)
+            for neighbor_name, neighbor in server.neighbors.items():
+                self.server.logger.debug("%s --> %s hop %d",
+                                         server_name, neighbor_name, neighbor.hopcount)
 
     def cmd_version(self, args):
         if len(args) > 0:
@@ -422,7 +440,56 @@ class IrcClient(IrcClientMessageMixin):
             self.connection.reply(irc.RPL_INFO, info=info)
         self.connection.reply(irc.RPL_ENDOFINFO)
 
-    def cmd(self, command, args):
+    def cmd_stats(self, args):
+        if len(args) == 0:
+            self.connection.reply(irc.ERR_NEEDMOREPARAMS, command='STATS')
+            return
+        if len(args) > 0:
+            stat_type = args[0]
+        target = None
+        if len(args) > 1:
+            target = args[1]
+        if stat_type.lower() == 't':
+            self.connection.reply(irc.RPL_STATSSENT, server=self.server.name,
+                                  data=self.server.statistics.sent)
+            self.connection.reply(irc.RPL_STATSRECV, server=self.server.name,
+                                  data=self.server.statistics.received)
+        if stat_type.lower() == 'm':
+            self.connection.reply(irc.RPL_STATSSENT, server=self.server.name,
+                                  data=self.server.statistics.messages)
+        self.connection.reply(irc.RPL_ENDOFSTATS, stat_query=stat_type)
+
+    def cmd_links(self, args):
+        if len(args) > 0:
+            self.connection.reply(irc.ERR_NOSUCHSERVER, args[0])
+            return
+        #TODO fix local info.
+        local_fqdn = _socket.getfqdn(self.server.address[0])
+        self.connection.reply(irc.RPL_LINKS,
+                              mask=local_fqdn,
+                              server=self.server.name,
+                              hopcount=0,
+                              server_info="Server info")
+        for server_name, server in self.server.servers.items():
+            self.server.logger.debug(dir(server))
+            server_fqdn = _socket.getfqdn(server.connection.socket.getsockname()[0])
+            self.connection.reply(irc.RPL_LINKS,
+                                  mask=server_fqdn,
+                                  server=server_name,
+                                  hopcount=server.hopcount,
+                                  server_info=server.info)
+            for neighbor_name, neighbor in server.neighbors.items():
+                self.connection.reply(irc.RPL_LINKS,
+                                      mask=neighbor.fqdn,
+                                      server=neighbor_name,
+                                      hopcount=neighbor.hopcount,
+                                      server_info=neighbor.info)
+        self.connection.reply(irc.RPL_ENDOFLINKS, mask=local_fqdn)
+
+    def cmd_trace(self, args):
+        pass
+
+    def cmd(self, prefix, command, args):
         try:
             cmd = getattr(self, 'cmd_%s' % command.lower())
         except AttributeError as err:
@@ -441,16 +508,25 @@ class IrcClient(IrcClientMessageMixin):
     def host(self):
         return self.connection._host()
 
-    def name(self):
+    def realname(self):
         return self.connection.user[2]
+
+    def hopcount(self):
+        return 0 # FIXME?
+
+    def servertoken(self):
+        return self.server.token
 
     def prefix(self):
         return ":%s!%s@%s" % (self.nick(), self.username(), self.host())
 
+    def is_op(self):
+        return self.modes['o']
+
     def rpl_whoami(self, requester):
         requester.connection.reply(irc.RPL_WHOISUSER,
                 nick=self.nick(), user=self.username(), host=self.host(),
-                realname=self.name())
+                realname=self.realname())
         # TODO: irc.RPL_WHOISOPERATOR
         # TODO: irc.RPL_WHOISCHANNELS
         # TODO: irc.RPL_WHOISSERVER

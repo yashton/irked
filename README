@@ -1,4 +1,23 @@
-Repository for CS 4500 Senior Project for group Binary Beasts
+Irked IRC Daemon
 
 Cameron Matheson
 Ashton Snelgrove
+
+How to run:
+
+Dependencies: python 3.3 or higher (3.2 may work too, but it's untested)
+$ python3 irked.py
+
+
+How to run the admin dashboard:
+Dependencies:
+- Ruby 1.9.x
+- sequel
+- sqlite3
+- sinatra
+
+$ cd dashboard/public
+$ make
+$ cd ..
+$ ruby harvester.rb &
+$ ruby dashboard.rb

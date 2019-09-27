@@ -1,0 +1,1 @@
+{"nodes": [{"group": 0, "name": "licorices"}, {"group": 1, "name": "alienated"}, {"group": 2, "name": "African"}], "links": [{"source": 2, "target": 1, "value": 10}, {"source": 1, "target": 2, "value": 10}, {"source": 0, "target": 1, "value": 10}, {"source": 1, "target": 2, "value": 10}, {"source": 0, "target": 1, "value": 10}, {"source": 0, "target": 2, "value": 10}]}

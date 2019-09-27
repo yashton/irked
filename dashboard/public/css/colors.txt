@@ -1,0 +1,13 @@
+Primary Color:		
+0067FF	306ABF	0043A6	408DFF	73ABFF
+
+Secondary Color A:		
+C700FF	A030BF	8100A6	D540FF	E073FF
+
+Secondary Color B:			
+85FF00	7ABF30	56A600	A3FF40	BCFF73
+
+Complementary Color:			
+FFA100	BF8A30	A66900	FFB840	FFCB73
+
+http://colorschemedesigner.com/#3F62z----w0w0

@@ -1,0 +1,84 @@
+h3 {
+    margin: 0px;
+    padding: 10px;
+}
+
+h1 {
+    margin: 0px;
+}
+
+div.tree {
+    overflow: hidden;
+}
+
+div.contents {
+    width: 1024px;
+    margin: 0px auto;
+}
+
+#tabs .ui-tabs-panel {
+   overflow: auto;
+}
+
+#tabs .ui-tabs-nav {
+    height: 30px;
+}
+
+#tabs {
+    border: none;
+    background-position-y: 43px;
+}
+
+#logs, #tabs, #tabs div ul {
+    padding: 0px;
+    margin: 0px;
+}
+
+#dialog {
+    margin: 0px auto;
+    padding: 3px;
+}
+
+#dialog form {
+    float: right;
+}
+
+#tabs .ui-tabs-nav, #dialog {
+    height: 40px;
+}
+
+.loading {
+    position: relative;
+    left: 50%;
+    top: 60%;
+    margin-top: -32px;
+    margin-left: -16px;
+    background: url('../img/loading_white.gif');
+    width: 32px;
+    height: 32px;
+    z-index: 1000;
+}
+
+.loading_refresh {
+    position: absolute;
+    right: 22px;
+    top: 84px;
+    margin-top: -32px;
+    margin-left: -16px;
+    background: url('../img/loading_refresh_white.gif');
+    width: 16px;
+    height: 16px;
+    z-index: 1000;
+}
+
+.loading_small {
+    position: relative;
+    left: 50%;
+    top: 60%;
+    margin-top: -32px;
+    margin-left: -16px;
+    background: url('../img/loading_small.gif');
+    width: 16px;
+    height: 16px;
+    z-index: 1000;
+}

@@ -164,6 +164,12 @@ ERR_NOSERVICEHOST = 492
 ERR_UMODEUNKNOWNFLAG = 501
 ERR_USERSDONTMATCH = 502
 
+# irked specific codes
+RPL_STATSSENT = 223
+RPL_STATSRECV = 224
+RPL_STATSMESSAGES = 225
+RPL_STATSUSERS = 226
+
 IRC_CODE = {
     RPL_WELCOME :
        ("RPL_WELCOME",
@@ -218,7 +224,7 @@ IRC_CODE = {
     RPL_STATSYLINE :
        ("RPL_STATSYLINE", ""),
     RPL_ENDOFSTATS :
-       ("RPL_ENDOFSTATS", ""),
+       ("RPL_ENDOFSTATS", "%(stat_query)s :End of STATS report"),
     RPL_UMODEIS :
        ("RPL_UMODEIS", "%(mode)s"),
     RPL_SERVICEINFO :
@@ -352,9 +358,9 @@ IRC_CODE = {
     RPL_CLOSEEND :
        ("RPL_CLOSEEND", ""),
     RPL_LINKS :
-       ("RPL_LINKS", ""),
+       ("RPL_LINKS", "%(mask)s %(server)s :%(hopcount)s %(server_info)s"),
     RPL_ENDOFLINKS :
-       ("RPL_ENDOFLINKS", ""),
+       ("RPL_ENDOFLINKS", "%(mask)s :End of LINKS list"),
     RPL_ENDOFNAMES :
        ("RPL_ENDOFNAMES", '%(channel)s :End of NAMES list'),
     RPL_BANLIST :
@@ -512,6 +518,15 @@ IRC_CODE = {
     ERR_USERSDONTMATCH :
        ("ERR_USERSDONTMATCH",
         ":Cannot change mode for other users"),
+    # irked specific codes
+    RPL_STATSSENT :
+        ('RPL_STATSSENT', '%(server)s :%(data)s'),
+    RPL_STATSRECV :
+        ('RPL_STATSRECV', '%(server)s :%(data)s'),
+    RPL_STATSMESSAGES :
+        ('RPL_STATSMESSAGES', '%(server)s :%(data)s'),
+    RPL_STATSUSERS :
+        ('RPL_STATSUSERS', '%(server)s :%(data)s'),
 }
 
 CHANNEL_PREFIX = ['&', '#', '+', '!']

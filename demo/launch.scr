@@ -1,0 +1,129 @@
+escape ^\\\
+
+# Launch 16 clients
+screen -t demo0 1 irssi --config client1.irssi.config
+sleep 1
+screen -t demo1 2 irssi --config client2.irssi.config
+sleep 1
+screen -t demo2 3 irssi --config client3.irssi.config
+sleep 1
+screen -t demo3 4 irssi --config client4.irssi.config
+sleep 1
+screen -t demo4 5 irssi --config client5.irssi.config
+sleep 1
+screen -t demo5 6 irssi --config client6.irssi.config
+sleep 1
+screen -t demo6 7 irssi --config client7.irssi.config
+sleep 1
+screen -t demo7 8 irssi --config client8.irssi.config
+sleep 1
+screen -t demo8 9 irssi --config client9.irssi.config
+sleep 1
+screen -t demo9 10 irssi --config client10.irssi.config
+sleep 1
+screen -t demo10 11 irssi --config client11.irssi.config
+sleep 1
+screen -t demo11 12 irssi --config client12.irssi.config
+sleep 1
+screen -t demo12 13 irssi --config client13.irssi.config
+sleep 1
+screen -t demo13 14 irssi --config client14.irssi.config
+sleep 1
+screen -t demo14 15 irssi --config client15.irssi.config
+sleep 1
+screen -t demo15 16 irssi --config client16.irssi.config
+
+sessionname irked_demo
+
+# split into 16 sections
+split
+
+split -v
+
+split
+split -v
+focus down
+focus down
+split -v
+
+focus down
+focus down
+
+split
+split -v
+focus down
+focus down
+split -v
+
+focus down
+focus down
+
+split -v
+
+split
+split -v
+focus down
+focus down
+split -v
+
+focus down 
+focus down
+
+split
+split -v
+focus down
+focus down
+split -v
+
+# select the appropriate window for each section
+focus top
+select 1
+sleep 1
+focus down
+select 2
+sleep 1
+focus down
+select 3
+sleep 1
+focus down
+select 4
+sleep 1
+focus down
+select 5
+sleep 1
+focus down
+select 6
+sleep 1
+focus down
+select 7
+sleep 1
+focus down
+select 8
+sleep 1
+focus down
+select 9
+sleep 1
+focus down
+select 10
+sleep 1
+focus down
+select 11
+sleep 1
+focus down
+select 12
+sleep 1
+focus down
+select 13
+sleep 1
+focus down
+select 14
+sleep 1
+focus down
+select 15
+sleep 1
+focus down
+select 16
+
+focus top
+
+startup_message off

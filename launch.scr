@@ -1,0 +1,100 @@
+escape ^\\\
+
+# Launch 16 clients
+screen -t demo0 16 irssi -c localhost -p 6667 -n demo0 -h testing
+screen -t demo1 1 irssi -c localhost -p 6667 -n demo1 -h testing
+screen -t demo2 2 irssi -c localhost -p 6667 -n demo2 -h testing
+screen -t demo3 3 irssi -c localhost -p 6667 -n demo3 -h testing
+screen -t demo4 4 irssi -c localhost -p 6667 -n demo4 -h testing
+screen -t demo5 5 irssi -c localhost -p 6667 -n demo5 -h testing
+screen -t demo6 6 irssi -c localhost -p 6667 -n demo6 -h testing
+screen -t demo7 7 irssi -c localhost -p 6667 -n demo7 -h testing
+screen -t demo8 8 irssi -c localhost -p 6667 -n demo8 -h testing
+screen -t demo9 9 irssi -c localhost -p 6667 -n demo9 -h testing
+screen -t demo10 10 irssi -c localhost -p 6667 -n demo10 -h testing
+screen -t demo11 11 irssi -c localhost -p 6667 -n demo11 -h testing
+screen -t demo12 12 irssi -c localhost -p 6667 -n demo12 -h testing
+screen -t demo13 13 irssi -c localhost -p 6667 -n demo13 -h testing
+screen -t demo14 14 irssi -c localhost -p 6667 -n demo14 -h testing
+screen -t demo15 15 irssi -c localhost -p 6667 -n demo15 -h testing
+
+
+sessionname irked_demo
+
+# split into 16 sections
+split
+
+split -v
+
+split
+split -v
+focus down
+focus down
+split -v
+
+focus down
+focus down
+
+split
+split -v
+focus down
+focus down
+split -v
+
+focus down
+focus down
+
+split -v
+
+split
+split -v
+focus down
+focus down
+split -v
+
+focus down 
+focus down
+
+split
+split -v
+focus down
+focus down
+split -v
+
+# select the appropriate window for each section
+focus top
+select 1
+focus down
+select 2
+focus down
+select 3
+focus down
+select 4
+focus down
+select 5
+focus down
+select 6
+focus down
+select 7
+focus down
+select 8
+focus down
+select 9
+focus down
+select 10
+focus down
+select 11
+focus down
+select 12
+focus down
+select 13
+focus down
+select 14
+focus down
+select 15
+focus down
+select 16
+
+focus top
+
+startup_message off

@@ -1,0 +1,178 @@
+$(function () {
+    var server_logs_updated = new Date().getTime();
+    var server_logs_refresh = 10000;
+
+    $.ajax({
+        url: 'irked.log',
+        data: { start: (server_logs_updated - 100000), end: server_logs_updated },
+        dataType: 'text',
+        success: function(data) {
+            $('#log_loading:visible').hide('fade', 'slow');
+            var lines = data.split("\n");
+            var start = lines.length > 50 ? lines.length - 50 : 0;
+            for (var i = start; i < lines.length; i++) {
+                if (lines[i].length > 0)
+                    $('#logs').append('<li>' + lines[i] + '</li>');
+            }
+
+            $('#logs:hidden').show('fade', 'slow');
+            server_logs_updated = new Date().getTime();
+            setTimeout(update_server_logs, server_logs_refresh);
+        }
+    });
+
+    function update_server_logs()
+    {
+        $.ajax({
+            url: 'irked.log',
+            data: { start: server_logs_updated, end: (new Date().getTime()) },
+            dataType: 'text',
+            beforeSend: function() {
+                $('#log_small_loading:hidden').show('fade', 'fast');
+            },
+            success: function(data) {
+                var scroll = $('#tabs-1')[0];
+                var offset = scroll.scrollHeight - scroll.offsetHeight - 50;
+                var at_bottom = scroll.scrollTop >= offset;
+
+                var lines = data.split("\n");
+                for (var i = 0; i < lines.length; i++) {
+                    if (lines[i].length > 0)
+                        $('#logs').append('<li>' + lines[i] + '</li>');
+                }
+
+                if (at_bottom)
+                    $('#tabs-1').animate({ scrollTop: $('#tabs-1')[0].scrollHeight }, 1000);
+
+                $('#log_small_loading:visible').hide('fade', 'fast');
+                server_logs_updated = new Date().getTime();
+                setTimeout(update_server_logs, server_logs_refresh);
+            },
+            error: function() {
+                server_logs_updated = new Date().getTime();
+                setTimeout(update_server_logs, server_logs_refresh);
+            }
+        });
+    }
+
+    var channel_input = $("#channel");
+    var tab_counter = 2;
+
+    // tabs init with a custom tab template and an
+    // "add" callback filling in the content
+    var $tabs = $("#tabs").tabs({
+        tabTemplate: "<li>" +
+            '<a href="#{href}">#{label}</a>' +
+            '<span class="ui-icon ui-icon-close">Remove Tab</span></li>',
+        add: add_contents,
+    });
+
+    function add_contents(event, ui) {
+        // Fills content with data for channel.
+        var channel = channel_input.val();
+        var channel_clean = channel.replace(/#/g, '')
+        channel_input.val('');
+
+        var tab_content =
+            '<div class="loading_refresh ui-helper-hidden"></div>' +
+            '<ul id="' + channel_clean + '_tab_contents" ' +
+                'class="ui-helper-hidden"></ul>';
+
+        $(ui.panel).append(tab_content);
+        $tabs.tabs("select", ui.index);
+
+        var start = 0, end = 0;
+        update_tab(channel, channel_clean, start, end);
+    }
+
+    function update_tab(channel, channel_clean, start, end)
+    {
+        $.ajax({
+            url: 'channel.log',
+            dataType: 'text',
+            data: { start: start, end: end, channel: channel },
+            beforeSend: function() {
+                $('#' + channel_clean + '_tab_contents')
+                    .parent().children('.loading_refresh:hidden')
+                    .show('fade', 'fast');
+            },
+            success: set_tab_contents(channel, channel_clean, start, end),
+            error: set_tab_contents_error(channel, channel_clean, start, end),
+        });
+    }
+
+    function set_tab_contents(channel, channel_clean, start, end)
+    {
+        return function (data) {
+            var target = $('#' + channel_clean + '_tab_contents')
+            var scroll = target.parent()[0]
+            var offset = scroll.scrollHeight - scroll.offsetHeight - 50;
+            var at_bottom = scroll.scrollTop >= offset;
+
+            if (target.length == 0)
+                return;
+
+            var lines = data.split("\n");
+            for (var i = 0; i < lines.length; i++) {
+                if (lines[i].length > 0) {
+                    var content = '<li>' + lines[i] + '</li>';
+                    target.append(content);
+                }
+            }
+
+            if (at_bottom)
+                target.parent().animate({ scrollTop: scroll.scrollHeight }, 1000);
+
+            target.parent().children('.loading_refresh:visible')
+                .hide('fade', 'fast');
+            $('#' + channel_clean + '_tab_contents:hidden')
+                .show('fade', 'slow');
+            setTimeout(function () {
+                update_tab(channel, channel_clean, end, new Date().getTime())
+            }, server_logs_refresh);
+        }
+    }
+
+    function set_tab_contents_error(channel, channel_clean, start, end)
+    {
+        return function () {
+            var target = $('#' + channel_clean + '_tab_contents')
+            if (target.length == 0)
+                return;
+
+            target.append('<li>An error occurred.</li>')
+            target.parent().children('.loading_refresh:visible')
+                .hide('fade', 'fast');
+            $('#' + channel_clean + '_tab_contents:hidden')
+                .show('fade', 'slow');
+            setTimeout(function () {
+                update_tab(channel, channel_clean, end, new Date().getTime())
+            }, server_logs_refresh);
+        }
+    }
+
+    // On submit, open new tab with channel
+    var $form = $("#dialog form").submit(function() {
+        var channel = channel_input.val();
+        if (channel == null || channel == '')
+            return false;
+
+        var existing = $('#' + channel.replace(/#/g, '') + '_tab_contents')
+        if (existing.length > 0) {
+            var index = $('div.ui-tabs-panel', $tabs).index(existing.parent());
+            $tabs.tabs('select', index);
+            channel_input.val('');
+            return false;
+        }
+
+        $tabs.tabs("add", "#tabs-" + tab_counter, channel);
+        tab_counter++;
+        return false;
+    });
+
+    // close icon: removing the tab on click
+    $("#tabs span.ui-icon-close").live("click", function() {
+        var index = $('li', $tabs).index($(this).parent());
+        $tabs.tabs('remove', index);
+    });
+});

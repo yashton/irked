@@ -1,0 +1,28 @@
+[extensions]
+test = <-- in extensions path
+module = /usr/share/irked/test.py <-- module
+module_dir = /usr/share/irked/test <-- module directory with __init__.py
+
+[test]
+option1 = 1
+option2 = blah
+
+each module gets passed its corresponding config file section as a dictionary. We could also pass the complete config set
+
+Importing:
+The expression
+import monkey
+can be accessed with the __import__ function
+x = __import__('monkey')
+Members can then be accessed with x.foo
+
+Mercurial extensions are full python executables, which have access to the API and work mostly like normal.
+
+We would probably need a more inheritence/interface oriented solution. Define a set of functions which transform text (e.g. pre_incoming_command, post_channel_chat). Any functions in the module implementing hte name interfaces will be added to the chain. Other options include full object inheritence from an abstract base class.
+
+Scope:
+What is the appropriate scope information a module can know about? Hooks like post message received are within the context of a client connection - what does the plugin know about the client? What things can the plugin manipulate? 
+
+API Operations
+This would indicate that we should have some better decomposition, providing functions which do the common operations (e.g. join a user to a channel), instead of having the logic in the parsing code for the client/servers.
+

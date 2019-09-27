@@ -1,0 +1,32 @@
+div.graph {
+    width: 315px;
+    height: 210px;
+    margin: 5px auto;
+}
+
+div.graph_container {
+    width: 330px;
+    height: 265px;
+}
+
+div.graphs {
+    float: right;
+}
+
+div.graph_container, div.other_container {
+    margin: 10px 0px 10px 0px;
+}
+
+div.other_container {
+    width:680px;
+    height: 404px;
+}
+
+div.tree {
+    height: 360px;
+    width: 680px;
+}
+
+#tabs .ui-tabs-panel {
+   height: 278px;
+}

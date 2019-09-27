@@ -278,7 +278,7 @@ class WordGen:
         return "".join(chars)
 
 class Bot():
-    def __init__(self, sock, ready, generator):
+    def __init__(self, sock, ready, generator, nick, user, channel):
         self.sock = sock
         self.request_ready = ready
         self.generator = generator
@@ -288,12 +288,12 @@ class Bot():
         self.in_buffer = b''
         self.expected = set()
 
-        self.register(self.generator.word(),
-                      self.generator.word(),
-                      self.generator.word(),
+        self.register("secret",
+                      nick,
+                      user,
                       0,
                       self.generator.sentence(length=2))
-        self.join("#test")
+        self.join(channel)
 
     def handle(self, data):
         self.in_buffer += data
@@ -334,3 +334,5 @@ class Bot():
 
     def join(self, channel):
         self.send("JOIN", channel=channel, key="")
+        time.sleep(2)
+        self.send("PRIVMSG", target=channel, message=self.generator.sentence())

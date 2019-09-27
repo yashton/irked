@@ -7,6 +7,8 @@ epoll = select.epoll()
 generator = irc.bot.WordGen('/usr/share/dict/words')
 connections = {}
 
+host, port, nick, user, channel = sys.argv[1:]
+
 def ready(fileno):
     return lambda: epoll.modify(fileno, select.EPOLLOUT)
 
@@ -17,10 +19,10 @@ def register(address):
     #sock.listen(BACKLOG_QUEUE_SIZE)
     sock.setblocking(0)
     epoll.register(sock.fileno(), select.EPOLLIN)
-    client = irc.bot.Bot(sock, ready(sock.fileno()), generator)
+    client = irc.bot.Bot(sock, ready(sock.fileno()), generator, nick, user, channel)
     connections[sock.fileno()] = client
 
-register((sys.argv[1], int(sys.argv[2])))
+register((host, int(port)))
 try:
     while True:
         events = epoll.poll(1)

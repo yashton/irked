@@ -1,0 +1,83 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>irked IRC server</title>
+    <link href="css/dashboard.css" rel="stylesheet" type="text/css">
+    <link href="css/dashboard_layout.css" rel="stylesheet" type="text/css">
+    <!-- <link href="css/dashboard_vertical.css" rel="stylesheet" type="text/css"> -->
+    <link href="css/dashboard_horizontal.css" rel="stylesheet" type="text/css">
+    <link href="css/jquery-ui.css" rel="stylesheet" type="text/css">
+    <!--[if lte IE 8]><script language="javascript" type="text/javascript" src="js/flot/excanvas.min.js"></script><![endif]-->
+    <script language="javascript" type="text/javascript" src="js/jquery.js"></script>
+    <script language="javascript" type="text/javascript" src="js/jquery.flot.js"></script>
+    <script language="javascript" type="text/javascript" src="js/jquery-ui.js"></script>
+    <script language="javascript" type="text/javascript" src="js/d3.v2.js"></script>
+  </head>
+  <body>
+    <div class="contents">
+      <h1 class="ui-widget-header ui-corner-all drop-shadow">irked IRC server</h1>
+      <div class="graphs">
+        <div id="data_box" class="graph_container ui-corner-all drop-shadow">
+          <div id="data_loading" class="loading"></div>
+          <h3 class="ui-widget-header ui-corner-top">Transferred Data</h3>
+          <div class="ui-widget-content ui-corner-bottom">
+            <div id="data_graph" class="graph ui-helper-hidden"></div>
+          </div>
+        </div>
+        <div id="messages_box" class="graph_container ui-corner-all drop-shadow">
+          <div id="messages_loading" class="loading"></div>
+          <h3 class="ui-widget-header ui-corner-top">Messages</h3>
+          <div class="ui-widget-content ui-corner-bottom">
+            <div id="messages_graph" class="graph ui-helper-hidden"></div>
+          </div>
+        </div>
+        <div id="users_box" class="graph_container ui-corner-all drop-shadow">
+          <div id="users_loading" class="loading"></div>
+          <h3 class="ui-widget-header ui-corner-top">Connected Users</h3>
+          <div class="ui-widget-content ui-corner-bottom">
+            <div id="users_graph" class="graph ui-helper-hidden"></div>
+          </div>
+        </div>
+      </div>
+      <div class="main">
+        <div id="network_topology" class="other_container ui-corner-all drop-shadow">
+          <div id="tree_loading" class="loading"></div>
+          <h3 class="ui-widget-header ui-corner-top">Network Topology</h3>
+          <div id="network_tree" class="tree ui-widget-content ui-corner-bottom ui-helper-hidden"></div>
+        </div>
+        <div id="log_viewer" class="other_container ui-corner-all drop-shadow">
+          <div id="log_loading" class="loading"></div>
+          <div id="tabs">
+            <ul>
+              <li><a href="#tabs-1">Server Logs</a></li>
+            </ul>
+            <div id="tabs-1" class="ui-widget-content">
+              <div id="log_small_loading"
+                   class="loading_refresh ui-helper-hidden"></div>
+              <ul id="logs" class="ui-helper-hidden"></ul>
+              </div>
+          </div>
+          <div id="dialog" class="ui-widget ui-widget-header ui-corner-bottom">
+            <form>
+              <fieldset class="ui-helper-reset">
+                <label for="channel">Channel</label>
+                <input type="text" name="channel"
+                       id="channel" value=""
+                       class="ui-widget-content ui-corner-all" />
+                <input type="submit" name="submit"
+                       id="tab_submit" value="Launch" />
+              </fieldset>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script language="javascript" type="text/javascript" src="js/graphs.js"></script>
+    <script language="javascript" type="text/javascript" src="js/tree.js"></script>
+    <script language="javascript" type="text/javascript" src="js/logs.js"></script>
+    <script language="javascript" type="text/javascript">
+      $(function() { $('#tab_submit').button(); });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,74 @@
+body {
+    background: #DEDED0;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -o-user-select: none;
+    user-select: none;
+    font-family: Courier, monospace;
+}
+
+h1 {
+    text-align: center;
+    border: 1px solid #444;
+}
+
+h1, h2, h3 {
+    font-family: Segoe UI, Helvetica, Arial, sans-serif;
+}
+
+div.graph_container, div.other_container {
+    border: 1px solid #444;
+    background: #333;
+}
+
+
+#log_contents {
+    font-size: 9pt;
+    -webkit-user-select: text;
+    -khtml-user-select: text;
+    -moz-user-select: text;
+    -o-user-select: text;
+    user-select: text;
+}
+
+#dialog form label {
+    font-size: 12pt;
+}
+
+.nodetext {
+    pointer-events: none;
+}
+
+circle.node {
+    cursor: pointer;
+    stroke: #77FF77;
+    stroke-width: 1.5px;
+}
+
+line.link {
+  fill: none;
+  stroke: #40FF40;
+}
+
+.no-select {
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -o-user-select: none;
+    user-select: none;
+}
+
+.drop-shadow {
+    -moz-box-shadow: 5px 5px 10px #777;
+    -webkit-box-shadow: 5px 5px 10px #777;
+    box-shadow: 5px 5px 10px #777;
+}
+
+#tabs div ul {
+    font-size: 9pt;
+    font-family: Courier, monospace;
+    list-style-image: url('../img/item.png');
+    color: #77FF77;
+    text-shadow: 0 0 1.2em #77FF77;
+}
